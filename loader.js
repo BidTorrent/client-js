@@ -3,7 +3,7 @@
 ** BidTorrent loader component.
 ** copyright the BidTorrent team 2015
 */
-bidTorrent = function (params, complete)
+bidTorrent = function (config, complete)
 {
 	var loader;
 
@@ -13,21 +13,23 @@ bidTorrent = function (params, complete)
 		var iframe;
 		var parse;
 
-		params = params || {};
-		params.base = params.base || 'http://bidtorrent.io';
-		params.publisher = params.publisher || document.location.href;
-		params.slot = params.slot || {};
-		params.slot.width = params.slot.width || 300;
-		params.slot.height = params.slot.height || 250;
-		params.slot.id = params.slot.id || 'bidtorrent-ad';
-		params.passback = params.passback || '<div><img src="http://www.fundamentalfootball.com/images/PassbackLogo.gif" width="' + params.slot.width + '" height="' + params.slot.height + '" /></div>';
+		config = config || {};
+		config.base = config.base || 'http://bidtorrent.io';
+		config.ep = config.ep || {};
+		config.ep.bidders = config.ep.bidders || config.base + '/bidders.json';
+		config.publisher = config.publisher || document.location.href;
+		config.slot = config.slot || {};
+		config.slot.width = config.slot.width || 300;
+		config.slot.height = config.slot.height || 250;
+		config.slot.id = config.slot.id || 'bidtorrent-ad';
+		config.passback = config.passback || '<div><img src="http://www.fundamentalfootball.com/images/PassbackLogo.gif" width="' + config.slot.width + '" height="' + config.slot.height + '" /></div>';
 
 		parse = document.createElement('a');
-		parse.href = params.base;
+		parse.href = config.base;
 
-		if (params.debug !== undefined)
+		if (config.debug !== undefined)
 		{
-			debug = params.debug;
+			debug = config.debug;
 
 			if (typeof debug === 'string' && window[debug] !== undefined)
 				debug = window[debug];
@@ -38,25 +40,26 @@ bidTorrent = function (params, complete)
 					debug(message.data);
 			}, true);
 
-			params.debug = true;
+			config.debug = true;
 		}
 
 		iframe = document.createElement('iframe');
 		iframe.onload = function ()
 		{
-			iframe.contentWindow.postMessage(params, '*');
+			iframe.contentWindow.postMessage(config, '*');
 		};
 
 		iframe.frameBorder = 0;
-		iframe.height = params.slot.height + 'px';
+		iframe.height = config.slot.height + 'px';
 		iframe.seamless = 'seamless';
 		iframe.scrolling = 'no';
-		iframe.width = params.slot.width + 'px';
-		iframe.src = params.base + '/auction.html';
+		iframe.width = config.slot.width + 'px';
+		iframe.src = config.base + '/auction.html';
 
-		document.getElementById(params.slot.id).appendChild(iframe);
+		document.getElementById(config.slot.id).appendChild(iframe);
 
-		complete(params);
+		if (typeof complete === 'function')
+			complete(config);
 	};
 
 	if (document.readyState === 'complete' || document.readyState === 'loaded')

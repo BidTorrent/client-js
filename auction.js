@@ -7,11 +7,11 @@
 {
 	var auctionBegin = function (auction)
 	{
-		for (var id in auction.config.bidders)
+		for (var id in auction.bidders)
 		{
 			++auction.pending;
 
-			auctionSend(auction, id, auction.config.bidders[id]);
+			auctionSend(auction, id, auction.bidders[id]);
 		}
 	};
 
@@ -78,7 +78,7 @@
 	{
 		sendQuery
 		(
-			bidder.url,
+			bidder.bid_ep,
 			{
 				publisher:	auction.config.publisher,
 				width:		auction.config.slot.width,
@@ -185,35 +185,31 @@
 
 	var start = function (event)
 	{
-		var params = event.data;
+		var config = event.data;
 
 		sendQuery
 		(
-			params.config,
+			config.ep.bidders,
 			undefined,
-			function (config)
+			function (bidders)
 			{
 				var auction;
-				config = config || {};
-
-				for (var key in params)
-					config[key] = params[key];
 
 				auction =
 				{
+					bidders:	bidders,
 					config:		config,
 					id:			Math.floor(Math.random() * 10000000),
-					slot: 	config.slot.id,
 					pending:	0,
 					results:	[],
+					slot: 		config.slot.id,
 					timeout:	new Date().getTime() + config.timeout
 				}
 
 				sendDebug(auction, {
-					event:			'begin',
+					event:		'begin',
 					container:	config.slot.id,
-					auction:		auction.id,
-					bidders:		config.bidders
+					auction:	auction.id
 				});
 
 				setTimeout(function ()
@@ -224,7 +220,7 @@
 					auction.pending = 0;
 
 					auctionEnd(auction);
-				}, auction.config.timeout);
+				}, config.timeout);
 
 				auctionBegin(auction);
 			}
