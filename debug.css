@@ -1,0 +1,58 @@
+
+.bidtorrent-debug {
+	font:	normal normal normal 12px Arial;
+}
+
+.bidtorrent-debug .bidder {
+    color: #AAA;
+
+	padding:			4px 8px;
+	margin:				8px 0;
+	background-color:	#DDD;
+
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.bidtorrent-debug .bidder .name {
+    display:		block;
+    font-weight:	bold;
+}
+
+.bidtorrent-debug .bidder .info {
+	display:	block;
+	font-style:	italic;
+	text-align:	right;
+}
+
+.bidtorrent-debug .bidder.filter {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+.bidtorrent-debug .bidder.valid {
+    color: #31708f;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+}
+
+.bidtorrent-debug .bidder.winner {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+.bidtorrent-debug .bidder.winner .icon-parent {
+    position: relative;
+    float: right;
+}
+
+.bidtorrent-debug .bidder.winner .icon {
+    position: absolute;
+    top: 0px;
+    right: -40px;
+    width: 24px;
+    height: 24px;
+    background-image: url(img/badge-winner.png);
+}

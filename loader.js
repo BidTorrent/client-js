@@ -3,7 +3,7 @@
 ** BidTorrent loader component.
 ** copyright the BidTorrent team 2015
 */
-bidTorrent = function (params)
+bidTorrent = function (params, complete)
 {
 	var loader;
 
@@ -14,17 +14,16 @@ bidTorrent = function (params)
 		var parse;
 
 		params = params || {};
-		params.auction = params.auction || 'http://bidtorrent.com/auction.html';
-		params.config = params.config !== undefined ? params.config : 'http://bidtorrent.com/config.json';
+		params.base = params.base || 'http://bidtorrent.io';
 		params.publisher = params.publisher || document.location.href;
 		params.slot = params.slot || {};
 		params.slot.width = params.slot.width || 300;
 		params.slot.height = params.slot.height || 250;
 		params.slot.id = params.slot.id || 'bidtorrent-ad';
-		params.passback = params.passback || '<div><img src="http://bidder.com/Ads/passback_1.jpg" width="' + params.slot.width + '" height="' + params.slot.height + '" /></div>';
+		params.passback = params.passback || '<div><img src="http://www.fundamentalfootball.com/images/PassbackLogo.gif" width="' + params.slot.width + '" height="' + params.slot.height + '" /></div>';
 
 		parse = document.createElement('a');
-		parse.href = params.auction;
+		parse.href = params.base;
 
 		if (params.debug !== undefined)
 		{
@@ -49,13 +48,15 @@ bidTorrent = function (params)
 		};
 
 		iframe.frameBorder = 0;
-		iframe.seamless = 'seamless';
-		iframe.width = params.slot.width + 'px';
 		iframe.height = params.slot.height + 'px';
+		iframe.seamless = 'seamless';
 		iframe.scrolling = 'no';
-		iframe.src = params.auction;
+		iframe.width = params.slot.width + 'px';
+		iframe.src = params.base + '/auction.html';
 
 		document.getElementById(params.slot.id).appendChild(iframe);
+
+		complete(params);
 	};
 
 	if (document.readyState === 'complete' || document.readyState === 'loaded')
