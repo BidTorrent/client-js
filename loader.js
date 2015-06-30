@@ -7,29 +7,39 @@ bidTorrent = function (config, complete)
 {
 	var loader;
 
+	// Create the actual loading function
 	loader = function ()
 	{
+		var container;
 		var debug;
 		var iframe;
 		var parse;
 
 		config = config || {};
+		config.slot = config.slot || {};
+		config.slot.id = config.slot.id || 'bidtorrent-ad';
+
+		container = document.getElementById(config.slot.id);
+
+		if (!container)
+			return;
+
+		config.slot.width = config.slot.width || container.offsetWidth;
+		config.slot.height = config.slot.height || container.offsetHeight;
+
 		config.base = config.base || 'http://bidtorrent.io';
 		config.ep = config.ep || {};
 		config.ep.bidders = config.ep.bidders || config.base + '/bidders.json';
-		config.publisher = config.publisher || document.location.href;
-		config.slot = config.slot || {};
-		config.slot.width = config.slot.width || 300;
-		config.slot.height = config.slot.height || 250;
-		config.slot.id = config.slot.id || 'bidtorrent-ad';
+		config.floor = config.floor || 0.01;
 		config.passback = config.passback || '<div><img src="http://www.fundamentalfootball.com/images/PassbackLogo.gif" width="' + config.slot.width + '" height="' + config.slot.height + '" /></div>';
-
-		parse = document.createElement('a');
-		parse.href = config.base;
+		config.publisher = config.publisher || document.location.href;
+		config.timeout = config.timeout || 200;
 
 		if (config.debug !== undefined)
 		{
 			debug = config.debug;
+			parse = document.createElement('a');
+			parse.href = config.base;
 
 			if (typeof debug === 'string' && window[debug] !== undefined)
 				debug = window[debug];
@@ -56,12 +66,13 @@ bidTorrent = function (config, complete)
 		iframe.width = config.slot.width + 'px';
 		iframe.src = config.base + '/auction.html';
 
-		document.getElementById(config.slot.id).appendChild(iframe);
+		container.appendChild(iframe);
 
 		if (typeof complete === 'function')
 			complete(config);
 	};
 
+	// Execute loader callback when page is loaded or synchronously
 	if (document.readyState === 'complete' || document.readyState === 'loaded')
 		loader();
 	else

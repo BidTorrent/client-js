@@ -20,38 +20,43 @@
 		var secondPrice;
 		var winner;
 
+		secondPrice = auction.config.floor;
+
 		for (var i = 0; i < auction.results.length; ++i)
 		{
-			if (auction.results[i].price === undefined)
+			var result = auction.results[i];
+
+			if (result.price === undefined || result.price <= 0)
 				continue;
 
-			if (winner === undefined || winner.price < auction.results[i].price)
+			if (winner === undefined || winner.price < result.price)
 			{
 				if (winner !== undefined)
 					secondPrice = winner.price;
 
-				winner = auction.results[i];
+				winner = result;
 			}
-			else if (secondPrice === undefined || auction.results[i].price > secondPrice)
-				secondPrice = auction.results[i].price;
+			else if (secondPrice === undefined || result.price > secondPrice)
+				secondPrice = result.price;
 		}
 
 		if (winner === undefined)
 		{
 			document.body.innerHTML = auction.config.passback;
+
 			return;
 		}
 		
-		secondPrice = secondPrice + 0.01;
+		secondPrice += 0.01;
 		sendDebug
 		(
 			auction,
 			{
-				event:			'end',
+				event:		'end',
 				container:	auction.slot,
-				auction:		auction.id,
-				winner:			winner.id,
-				price:			secondPrice
+				auction:	auction.id,
+				winner:		winner.id,
+				price:		secondPrice
 			}
 		);
 		
@@ -63,14 +68,15 @@
 		var creativeImg;
 		var pixel;
 		
-		creativeImg = document.createElement("div");
+		creativeImg = document.createElement('div');
 		creativeImg.innerHTML  = creativeCode;
-		document.body.appendChild(creativeImg);
-		
-		pixel = document.createElement("img");
-		pixel.height = "1px";
-		pixel.width = "1px";
+
+		pixel = document.createElement('img');
+		pixel.height = '1px';
+		pixel.width = '1px';
 		pixel.src = winner.notify.replace('{winningprice}', secondPrice.toString());
+
+		document.body.appendChild(creativeImg);
 		document.body.appendChild(pixel);
 	}
 	
