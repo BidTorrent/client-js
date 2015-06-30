@@ -1,5 +1,8 @@
 {
 	"1": {
 		"bid_ep": "http://bidder.bidtorrent.io/bid.php"
+	},
+	"2": {
+		"bid_ep": "http://publisher.bidtorrent.io/"
 	}
 }

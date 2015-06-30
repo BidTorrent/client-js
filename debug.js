@@ -1,6 +1,9 @@
 
-bidTorrentDebug = (function ()
+(function ()
 {
+	if (window.bidTorrent === undefined)
+		return;
+
 	var swap_bidders = function (container, at, complete)
 	{
 		var i1 = 0;
@@ -100,14 +103,50 @@ bidTorrentDebug = (function ()
 		animate_next();
 	};
 
-	return function (data)
-	{
-		var bidder;
-		var container;
+	// FIXME: can be loaded after the function below is executed (=> crash, missing variable '$')
+	var defer_queue = [];
+	var defer_wait = 0;
 
-		$(function ()
+	var defer = function (callback)
+	{
+		if (typeof callback === 'function')
+			defer_queue.push(callback);
+
+		if (defer_wait > 0)
+			return;
+
+		for (var i = 0; i < defer_queue.length; ++i)
+			defer_queue[i]();
+
+		defer_queue = [];
+	};
+
+	var defer_signal = function ()
+	{
+		if (defer_wait > 0 && --defer_wait === 0)
+			defer();
+	}
+
+	// FIXME: wait for jQuery
+	++defer_wait;
+	var jquery = document.createElement ('script');
+	jquery.onload = defer_signal;
+	jquery.src = 'https://code.jquery.com/jquery-1.11.3.min.js';
+	jquery.type = 'text/javascript';
+	document.body.appendChild(jquery);
+
+	// FIXME
+	window.bidTorrent.connect(function (element, data)
+	{
+		defer(function ()
 		{
-			container = $('#bidtorrent-debug');
+			var bidder;
+			var container;
+
+			container = $(element).find('.bidtorrent-debug');
+
+			if (container.length === 0)
+				container = $('<div class="bidtorrent-debug">').appendTo($(element));
 
 			switch (data.event)
 			{
@@ -119,8 +158,6 @@ bidTorrentDebug = (function ()
 						bidder = data.bidders[id];
 
 						$('<div>')
-							.append($('<span>').addClass('icon-parent')
-							.append($('<span>').addClass('icon')))
 							.append($('<span>').addClass('name').text(bidder.name))
 							.append($('<span>').addClass('info').text('Pending...'))
 							.addClass('bidder')
@@ -203,5 +240,5 @@ bidTorrentDebug = (function ()
 					break;
 			}
 		});
-	};
+	});
 })();

@@ -215,7 +215,8 @@
 				sendDebug(auction, {
 					event:		'begin',
 					container:	config.slot.id,
-					auction:	auction.id
+					auction:	auction.id,
+					bidders:	bidders
 				});
 
 				setTimeout(function ()

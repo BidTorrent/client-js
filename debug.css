@@ -42,17 +42,3 @@
     background-color: #dff0d8;
     border-color: #d6e9c6;
 }
-
-.bidtorrent-debug .bidder.winner .icon-parent {
-    position: relative;
-    float: right;
-}
-
-.bidtorrent-debug .bidder.winner .icon {
-    position: absolute;
-    top: 0px;
-    right: -40px;
-    width: 24px;
-    height: 24px;
-    background-image: url(img/badge-winner.png);
-}
