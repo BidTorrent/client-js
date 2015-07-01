@@ -1,0 +1,12 @@
+{
+    "adv_bl": ["some.advertiser.com", ...], /* Blacklisted advertisers */
+    "bid_bl": [ "blBidderName"], /* Blacklisted bidder from the list */
+    "cat_bl": ["IAB1-4"], /* Blacklisted IAB categories */
+    "media_bl": ["Flash"],
+    "country": "FR",
+    "cur": "EUR",
+    "floor": 0.01,
+    "timeout_soft": 100,
+    "timeout_hard": 200,
+    "floor": 0.01
+}
