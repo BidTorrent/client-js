@@ -193,6 +193,18 @@
 	{
 		var config = event.data;
 
+		config = config || {};
+		config.slot = config.slot || {};
+		config.slot.width = config.slot.width || 300;
+		config.slot.height = config.slot.height || 250;
+		config.base = config.base || 'http://bidtorrent.io';
+		config.ep = config.ep || {};
+		config.ep.bidders = config.ep.bidders || config.base + '/bidders.json';
+		config.floor = config.floor || 0.01;
+		config.passback = config.passback || '';
+		config.publisher = config.publisher || document.location.href;
+		config.timeout = config.timeout || 500;
+
 		sendQuery
 		(
 			config.ep.bidders,

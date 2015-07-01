@@ -9,48 +9,38 @@ bidTorrent = (function ()
 	var probes;
 
 	// BidTorrent JavaScript client
-	client = function (config, complete)
+	client = function (init)
 	{
 		var loader;
 
 		// Create the actual loading function
 		loader = function ()
 		{
-			var container;
 			var debug;
 			var iframe;
 			var parse;
+			var slot;
 
-			// Populate configuration with missing default value
-			config = config || {};
-			config.slot = config.slot || {};
-			config.slot.id = config.slot.id || 'bidtorrent-ad';
+			// Populate initialization object with missing default value
+			init = init || {};
+			init.auction = init.auction || 'http://bidtorrent.io/auction.html';
+			init.slots = init.slots || [];
 
-			container = document.getElementById(config.slot.id);
-
-			if (!container)
+			if (!init.config)
+			{
+				console.error('[bidtorrent] no configuration object/URL specified');
 				return;
-
-			config.slot.width = config.slot.width || container.offsetWidth;
-			config.slot.height = config.slot.height || container.offsetHeight;
-
-			config.base = config.base || 'http://bidtorrent.io';
-			config.ep = config.ep || {};
-			config.ep.bidders = config.ep.bidders || config.base + '/bidders.json';
-			config.floor = config.floor || 0.01;
-			config.passback = config.passback || '';
-			config.publisher = config.publisher || document.location.href;
-			config.timeout = config.timeout || 200;
+			}
 
 			// Forward messages to connected probes
-			if (config.debug !== undefined)
+			if (init.debug_fixme !== undefined)
 			{
-				debug = document.getElementById(config.debug);
+				debug = document.getElementById(init.debug);
 
 				if (debug)
 				{
 					parse = document.createElement('a');
-					parse.href = config.base;
+					parse.href = init.base;
 
 					addEventListener('message', function (message)
 					{
@@ -63,24 +53,41 @@ bidTorrent = (function ()
 				}
 			}
 
-			// Create and append auction iframe
-			iframe = document.createElement('iframe');
-			iframe.onload = function ()
+			// Start auctions on each configured slot
+			for (var i = 0; i < init.slots.length; ++i)
 			{
-				iframe.contentWindow.postMessage(config, '*');
-			};
+				// Assign default values to slot parameters
+				slot = init.slots[i];
+				slot.element = slot.element || 'bidtorrent-ad';
 
-			iframe.frameBorder = 0;
-			iframe.height = config.slot.height + 'px';
-			iframe.seamless = 'seamless';
-			iframe.scrolling = 'no';
-			iframe.width = config.slot.width + 'px';
-			iframe.src = config.base + '/auction.html';
+				if (typeof slot.element === 'string')
+					slot.element = document.getElementById(slot.element);
 
-			container.appendChild(iframe);
+				if (!slot.element)
+				{
+					console.error('[bidtorrent] no element configured for slot #' + i);
+					continue;
+				}
 
-			if (typeof complete === 'function')
-				complete(config);
+				slot.height = slot.height || slot.element.offsetHeight;
+				slot.width = slot.width || slot.element.offsetWidth;
+
+				// Create and append auction iframe
+				iframe = document.createElement('iframe');
+				iframe.onload = function ()
+				{
+					iframe.contentWindow.postMessage(init.config, '*');
+				};
+
+				iframe.frameBorder = 0;
+				iframe.height = slot.height + 'px';
+				iframe.seamless = 'seamless';
+				iframe.scrolling = 'no';
+				iframe.width = slot.width + 'px';
+				iframe.src = init.auction;
+
+				slot.element.appendChild(iframe);
+			}
 		};
 
 		// Execute loader callback when page is loaded or synchronously
