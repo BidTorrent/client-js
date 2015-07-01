@@ -46,7 +46,7 @@
 
 			return;
 		}
-		
+
 		secondPrice += 0.01;
 		sendDebug
 		(
@@ -59,15 +59,15 @@
 				price:		secondPrice
 			}
 		);
-		
+
 		makeSucceededHtml(winner.creative, winner, secondPrice);
 	};
-	
+
 	var makeSucceededHtml = function(creativeCode, winner, secondPrice)
 	{
 		var creativeImg;
 		var pixel;
-		
+
 		creativeImg = document.createElement('div');
 		creativeImg.innerHTML  = creativeCode;
 
@@ -79,17 +79,18 @@
 		document.body.appendChild(creativeImg);
 		document.body.appendChild(pixel);
 	}
-	
+
 	var auctionSend = function (auction, id, bidder)
 	{
 		sendQuery
 		(
 			bidder.bid_ep,
-			{
-				publisher:	auction.config.publisher,
-				width:		auction.config.slot.width,
-				height:		auction.config.slot.height
-			},
+
+			// old
+			{ publisher:	auction.config.publisher, width: auction.config.slot.width, height: auction.config.slot.height },
+			// new
+			//auction.request,
+
 			function (result)
 			{
 				if (auction.pending === 0)
@@ -217,6 +218,7 @@
 
 				auction =
 				{
+					request:	formatBidRequest(config.publisher, config.impression),
 					bidders:	bidders,
 					config:		config,
 					id:			Math.floor(Math.random() * 10000000),
@@ -248,6 +250,66 @@
 			}
 		);
 	};
+
+	var formatBidRequest = function(impressionConfig, publisherConfig)
+	{
+		var makeGuid()
+		{
+			function S4() {
+				return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+			}
+
+			return (S4() + S4() + "-" + S4() +
+				"-" + S4().substr(0,3) + "-" +
+				S4() + "-" + S4() + S4() + S4()).toLowerCase();
+		}
+
+		var auctionRequest = {}
+
+		auctionRequest["user"] = {};
+		//auctionRequest["user"]["id"] = myUserId;
+		//auctionRequest["user"]["buyerid"] = myBuyerId;
+
+		auctionRequest["site"] = {}
+		//auctionRequest["site"]["cat"] = publisherCat;
+		//auctionRequest["site"]["domain"] = mydomain;
+		//auctionRequest["site"]["mobile"] = amIMobile;
+		auctionRequest["site"]["publisher"] = {};
+		//auctionRequest["site"]["publisher"]["id"] = publisherId; // where in config?
+		//auctionRequest["site"]["publisher"]["name"] = publisherName; // where in config?
+
+		auctionRequest["badv"] = publisherConfig["adv_bl"];
+		auctionRequest["bcat"] = publisherConfig["cat_bl"];
+		auctionRequest["cur"] = publisherConfig["cur"];
+
+		auctionRequest["device"] = {};
+		//auctionRequest["device"]["geo"] = {};
+		//auctionRequest["device"]["geo"]["country"] = myCountry;
+		//auctionRequest["device"]["ip"] = myIp;
+		//auctionRequest["device"]["js"] = 1;
+		//auctionRequest["device"]["language"] = myLanguage;
+		//auctionRequest["device"]["make"] = myMake;
+		//auctionRequest["device"]["model"] = myModel;
+		//auctionRequest["device"]["os"] = myOs;
+		//auctionRequest["device"]["ua"] = myUa;
+
+		auctionRequest["id"] = makeGuid();
+
+		auctionRequest["imp"] = {};
+		auctionRequest["imp"]["banner"] = {};
+		auctionRequest["imp"]["banner"]["btype"] = publisherConfig["btype"]; // to replace in config
+		auctionRequest["imp"]["banner"]["h"] = impressionConfig["h"];
+		//auctionRequest["imp"]["banner"]["pos"] = impressionPos;// in configuration?
+		auctionRequest["imp"]["banner"]["w"] = impressionConfig["w"];
+		auctionRequest["imp"]["bidfloor"] = publisherConfig["floor"];
+		auctionRequest["imp"]["id"] = impressionConfig["id"];
+		auctionRequest["imp"]["instl"] = 0;// impression config?
+		auctionRequest["imp"]["secure"] = false;// impression config?
+
+		auctionRequest["tmax"] = publisherConfig["timeout_soft"];
+
+		return auctionRequest;
+	}
 
 	addEventListener('message', start, false);
 })();
