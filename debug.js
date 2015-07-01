@@ -143,10 +143,7 @@
 			var bidder;
 			var container;
 
-			container = $(element).find('.bidtorrent-debug');
-
-			if (container.length === 0)
-				container = $('<div class="bidtorrent-debug">').appendTo($(element));
+			container = $(element);
 
 			switch (data.event)
 			{

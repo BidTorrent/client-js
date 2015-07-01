@@ -32,27 +32,6 @@ bidTorrent = (function ()
 				return;
 			}
 
-			// Forward messages to connected probes
-			if (init.debug_fixme !== undefined)
-			{
-				debug = document.getElementById(init.debug);
-
-				if (debug)
-				{
-					parse = document.createElement('a');
-					parse.href = init.base;
-
-					addEventListener('message', function (message)
-					{
-						if (message.origin === parse.protocol + '//' + parse.hostname)
-						{
-							for (var i = 0; i < probes.length; ++i)
-								probes[i](debug, message.data);
-						}
-					}, true);
-				}
-			}
-
 			// Start auctions on each configured slot
 			for (var i = 0; i < init.slots.length; ++i)
 			{
@@ -72,12 +51,44 @@ bidTorrent = (function ()
 				slot.height = slot.height || slot.element.offsetHeight;
 				slot.width = slot.width || slot.element.offsetWidth;
 
+				// Create and append debug mode iframe
+				if (init.debug)
+				{
+					debug = document.createElement('div');
+					debug.className = 'bidtorrent-debug';
+					debug.style.width = slot.width + 'px';
+
+					document.body.appendChild(debug);
+
+					parse = document.createElement('a');
+					parse.href = init.auction;
+
+					addEventListener('message', (function (debug, current)
+					{
+						return function (message)
+						{
+							if (message.origin === parse.protocol + '//' + parse.hostname && message.data.id === current)
+							{
+								for (var i = 0; i < probes.length; ++i)
+									probes[i](debug, message.data.data);
+							}
+						};
+					})(debug, i), true);
+				}
+
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');
-				iframe.onload = function ()
+				iframe.onload = (function (current)
 				{
-					iframe.contentWindow.postMessage(init.config, '*');
-				};
+					return function ()
+					{
+						iframe.contentWindow.postMessage({
+							config:	init.config,
+							debug:	init.debug,
+							id:		current
+						}, '*');
+					};
+				})(i);
 
 				iframe.frameBorder = 0;
 				iframe.height = slot.height + 'px';

@@ -147,10 +147,10 @@
 
 	var sendDebug = function (auction, data)
 	{
-		if (!auction.config.debug)
+		if (auction._debug === undefined)
 			return;
 
-		window.parent.postMessage(data, auction.config.publisher);
+		window.parent.postMessage({data: data, id: auction._debug}, auction.config.publisher);
 	};
 
 	var sendQuery = function (url, data, complete)
@@ -191,7 +191,9 @@
 
 	var start = function (event)
 	{
-		var config = event.data;
+		var config = event.data.config;
+		var debug = event.data.debug;
+		var id = event.data.id;
 
 		config = config || {};
 		config.slot = config.slot || {};
@@ -221,7 +223,8 @@
 					pending:	0,
 					results:	[],
 					slot: 		config.slot.id,
-					timeout:	new Date().getTime() + config.timeout
+					timeout:	new Date().getTime() + config.timeout,
+					_debug:		debug ? id : undefined
 				}
 
 				sendDebug(auction, {
