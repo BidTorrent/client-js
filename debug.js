@@ -129,11 +129,20 @@
 
 	// FIXME: wait for jQuery
 	++defer_wait;
-	var jquery = document.createElement ('script');
+	var jquery = document.createElement('script');
 	jquery.onload = defer_signal;
 	jquery.src = 'https://code.jquery.com/jquery-1.11.3.min.js';
 	jquery.type = 'text/javascript';
 	document.body.appendChild(jquery);
+
+	// FIXME: wait for CSS + hardcoded URL
+	++defer_wait;
+	var debugCss = document.createElement('link');
+	debugCss.onload = defer_signal;
+	debugCss.href = 'http://static.bidtorrent.io/debug.css';
+	debugCss.rel = 'stylesheet';
+	debugCss.type = 'text/css';
+	document.body.appendChild(debugCss);
 
 	// FIXME
 	window.bidTorrent.connect(function (element, data)

@@ -92,8 +92,8 @@ bidTorrent = (function ()
 
 				iframe.frameBorder = 0;
 				iframe.height = slot.height + 'px';
-				iframe.seamless = 'seamless';
 				iframe.scrolling = 'no';
+				iframe.seamless = 'seamless';
 				iframe.width = slot.width + 'px';
 				iframe.src = init.auction;
 
