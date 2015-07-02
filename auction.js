@@ -6,45 +6,41 @@
 {
     var start = function (event)
 	{
+		var bidders = event.data.bidders;
 		var config = event.data.config;
         var debug = event.data.debug;
         var id = event.data.id;
+		var then;
 
-        config = config || {};
-        config.slot = config.slot || {};
-        config.slot.width = config.slot.width || 300;
-        config.slot.height = config.slot.height || 250;
-        config.base = config.base || 'http://bidtorrent.io';
-        config.ep = config.ep || {};
-        config.ep.bidders = config.ep.bidders || config.base + '/bidders.json';
-        config.floor = config.floor || 0.01;
-        config.passback = config.passback || '';
-        config.publisher = config.publisher || document.location.href;
-        config.timeout = config.timeout || 500;
+		afterBidders = function (bidders)
+		{
+			if (typeof config === 'string')
+				sendQuery(config, undefined, function (config) { afterConfig(bidders, config); });
+			else
+				then(function (config) { afterConfig(bidders, config); });
+		};
 
-		sendQuery(
-			config.base + '/publisher.json',
-			undefined,
-			function (publisherConfig)
-			{
-                config.publisherConfig = publisherConfig;
-                publisherConfigLoaded(config, debug ? id : undefined);
-			});
+		afterConfig = function (bidders, config)
+		{
+			config = config || {};
+			config.floor = config.floor || 0.01;
+			config.slot = config.slot || {};
+			config.slot.width = config.slot.width || 300;
+			config.slot.height = config.slot.height || 250;
+			config.passback = config.passback || '';
+			config.publisher = config.publisher || document.location.href;
+			config.timeout = config.timeout || 500;
+
+			everythingLoaded(bidders, config, debug ? id : undefined);
+		};
+
+		if (typeof bidders === 'string')
+			sendQuery(bidders, undefined, afterBidders);
+		else
+			afterBidders(bidders);
 	};
 
-    var publisherConfigLoaded = function (config, debug)
-	{
-		sendQuery(
-			config.ep.bidders,
-			undefined,
-			function (bidders)
-			{
-                config.bidders = bidders;
-				biddersConfigLoaded(config, debug);
-			});
-	}
-
-    var biddersConfigLoaded = function (config, debug)
+    var everythingLoaded = function (bidders, config, debug)
 	{
         var makeGuid = function ()
 		{
@@ -65,8 +61,8 @@
 
 		auction =
 		{
-            request:	formatBidRequest(id, config.publisherConfig, config.slot),
-			bidders:	config.bidders,
+            request:	formatBidRequest(id, config, config.slot),
+			bidders:	bidders,
 			config:		config,
 			id:			id,
 			pending:	0,
@@ -81,7 +77,7 @@
 			event:		'begin',
 			container:	config.slot.id,
 			auction:	auction.id,
-			bidders:	config.bidders
+			bidders:	bidders
 		});
 
 		setTimeout(function ()

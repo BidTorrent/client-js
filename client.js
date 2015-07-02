@@ -30,9 +30,10 @@ bidTorrent = (function ()
 			// Populate initialization object with missing default value
 			init = init || {};
 			init.auction = init.auction || 'http://bidtorrent.io/auction.html';
+			init.bidders = init.bidders || 'http://bidtorrent.io/bidders.json';
 			init.slots = init.slots || [];
 
-			if (!init.config)
+			if (init.config === undefined)
 			{
 				console.error('[bidtorrent] no configuration object/URL specified');
 				return;
@@ -64,9 +65,10 @@ bidTorrent = (function ()
 					return function ()
 					{
 						iframe.contentWindow.postMessage({
-							config:	init.config,
-							debug:	init.debug,
-							id:		current
+							bidders:	init.bidders,
+							config:		init.config,
+							debug:		init.debug,
+							id:			current
 						}, '*');
 					};
 				})(i);
