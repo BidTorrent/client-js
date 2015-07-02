@@ -159,15 +159,15 @@
 				case 'begin':
 					$('#' + data.container).css('visibility', 'hidden');
 
-					for (var id in data.bidders)
+					for (var i = 0; i < data.bidders.length; ++i)
 					{
-						bidder = data.bidders[id];
+						bidder = data.bidders[i];
 
 						$('<div>')
 							.append($('<span>').addClass('name').text(bidder.name))
 							.append($('<span>').addClass('info').text('Pending...'))
 							.addClass('bidder')
-							.addClass('id-' + id)
+							.addClass('id-' + bidder.id)
 							.appendTo(container);
 					}
 

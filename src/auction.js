@@ -269,18 +269,18 @@
 	{
 		var futures = [];
 
-		for (var id in auction.bidders)
+		for (var i = 0; i < auction.bidders.length; ++i)
 		{
-			var bidder = auction.bidders[id];
+			var bidder = auction.bidders[i];
 
 			if (acceptBidder(bidder, auction))
-				futures.push(auctionSend(auction, id, bidder));
+				futures.push(auctionSend(auction, bidder));
 		}
 
 		return Future.bind.apply(null, futures);
 	};
 
-	var auctionSend = function (auction, bidderId, bidder)
+	var auctionSend = function (auction, bidder)
 	{
 		var response = new Future();
 		var timeout = new Future();
@@ -295,7 +295,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'timeout'
 				});
@@ -309,7 +309,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'corrupted'
 				});
@@ -323,7 +323,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'nobid'
 				});
@@ -337,7 +337,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'corrupted'
 				});
@@ -354,7 +354,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'nobid'
 				});
@@ -371,7 +371,7 @@
 				sendDebug(auction,
 				{
 					auction:	auction.id,
-					bidder:		bidderId,
+					bidder:		bidder.id,
 					event:		'bid_filter',
 					reason:		'nobid'
 				});
@@ -384,7 +384,7 @@
 			sendDebug(auction,
 			{
 				auction:	auction.id,
-				bidder:		bidderId,
+				bidder:		bidder.id,
 				event:		'bid_valid',
 				price:		bid.price
 			});
@@ -392,7 +392,7 @@
 			response.signal
 			({
 				creative:	bid.creative,
-				id:			bidderId,
+				id:			bidder.id,
 				notify:		bid.nurl,
 				price:		bid.price
 			});
