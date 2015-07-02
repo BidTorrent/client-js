@@ -26,15 +26,5 @@
 		"IAB7-28"
 	],
 	"cur": "USD",
-	"imp": {
-		"banner": {
-			"btype": [
-				4
-			]
-		},
-		"bidfloor": 1.75,
-		"instl": 1,
-		"secure": false
-	},
-	"tmax": 100
+	"tmax": 500
 }

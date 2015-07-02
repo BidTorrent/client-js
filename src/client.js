@@ -55,12 +55,13 @@ bidTorrent = (function ()
 					continue;
 				}
 
+				slot.floor = slot.floor || 0;
 				slot.height = slot.height || slot.element.offsetHeight;
 				slot.width = slot.width || slot.element.offsetWidth;
 
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');
-				iframe.onload = (function (current)
+				iframe.onload = (function (index, slot)
 				{
 					return function ()
 					{
@@ -68,10 +69,15 @@ bidTorrent = (function ()
 							bidders:	init.bidders,
 							config:		init.config,
 							debug:		init.debug,
-							id:			current
+							index:		index,
+							slot:		{
+								floor:	slot.floor,
+								height:	slot.height,
+								width:	slot.width
+							}
 						}, '*');
 					};
-				})(i);
+				})(i, slot);
 
 				iframe.frameBorder = 0;
 				iframe.height = slot.height + 'px';

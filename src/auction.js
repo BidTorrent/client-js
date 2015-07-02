@@ -15,29 +15,29 @@
 	{
 		var complete;
 		var future;
-		var result;
+		var values;
 		var wait;
 
 		complete = function (index)
 		{
 			return function (value)
 			{
-				result[index] = value;
+				values[index] = value;
 
 				if (--wait <= 0)
-					future.signal(result);
+					future.signal(values);
 			};
 		};
 
 		future = new Future();
-		result = new Array(arguments.length);
+		values = new Array(arguments.length);
 		wait = arguments.length;
 
 		for (var i = 0; i < arguments.length; ++i)
 			arguments[i].then(complete(i));
 
 		if (arguments.length <= 0)
-			future.signal(result);
+			future.signal(values);
 
 		return future;
 	};
@@ -48,19 +48,27 @@
 		var future;
 		var wait;
 
-		complete = function (value)
+		complete = function (futures)
 		{
-			if (wait)
-				future.signal(value);
+			return function (value)
+			{
+				if (wait)
+				{
+					wait = false;
 
-			wait = false;
+					for (var i = 0; i < futures.length; ++i)
+						futures[i].signal();
+
+					future.signal(value);
+				}
+			};
 		};
 
 		future = new Future();
 		wait = true;
 
 		for (var i = 0; i < arguments.length; ++i)
-			arguments[i].then(complete);
+			arguments[i].then(complete(arguments));
 
 		return future;
 	};
@@ -78,13 +86,15 @@
 	Future.prototype.signal = function (value)
 	{
 		if (this.ready)
-			return;
+			return false;
 
 		this.ready = true;
 		this.value = value;
 
 		if (this.complete !== undefined)
 			this.complete(value);
+
+		return true;
 	};
 
 	Future.prototype.then = function (complete)
@@ -100,7 +110,8 @@
 		var bidders = event.data.bidders;
 		var config = event.data.config;
 		var debug = event.data.debug;
-		var id = event.data.id;
+		var index = event.data.index;
+		var slot = event.data.slot;
 
 		Future
 			.bind
@@ -115,7 +126,7 @@
 
 				applyDefaultValue(config);
 
-				everythingLoaded(bidders, config, debug ? id : undefined);
+				everythingLoaded(bidders, config, slot, debug ? index : undefined);
 			});
 	};
 
@@ -123,11 +134,6 @@
 	{
 		config = config || {};
 		config.cur = config.cur || "EUR";
-		config.imp = config.imp || {};
-		config.imp.bidfloor = config.imp.bidfloor || 0.01;
-		config.imp.banner = config.imp.banner || {};
-		config.imp.banner.w = config.imp.banner.w || 300;
-		config.imp.banner.h = config.imp.banner.h || 250;
 		config.passback = config.passback || '';
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || "bidtorrent.com";
@@ -137,7 +143,7 @@
 		config.tmax = config.tmax || 500;
 	}
 
-	var everythingLoaded = function (bidders, config, debug)
+	var everythingLoaded = function (bidders, config, slot, debug)
 	{
 		var makeGuid = function ()
 		{
@@ -158,11 +164,11 @@
 
 		auction =
 		{
-			request:	formatBidRequest(id, config),
+			request:	formatBidRequest(id, config, slot),
 			bidders:	bidders,
 			config:		config,
 			id:			id,
-			timeout:	new Date().getTime() + config.timeout,
+			timeout:	new Date().getTime() + config.tmax,
 			_debug:	 debug
 		}
 
@@ -175,37 +181,141 @@
 
 		auctionBegin(auction).then(function (results)
 		{
+			// FIXME: ugly
+			for (var i = 0; i < bidders.length; ++i)
+				displayDebugInformation(auction, bidders[i], results[i]);
+
 			auctionEnd(auction, results);
 		});
 	}
 
-	var formatBidRequest = function (id, publisherConfig)
+	var formatBidRequest = function (id, config, slot)
 	{
 		var auctionRequest;
 		var impression;
 
 		auctionRequest =
 		{
-			badv: publisherConfig.badv,
-			bcat: publisherConfig.bcat,
-			cur: publisherConfig.cur,
+			badv: config.badv,
+			bcat: config.bcat,
+			cur: config.cur,
 			device: {
 				js: 1,
 				language: navigator.language,
 				ua: navigator.userAgent
 			},
 			id: id,
-			img: [publisherConfig.img],
-			site: publisherConfig.site,
-			tmax: publisherConfig.tmax,
+			imp: [{
+				banner: {
+					w:	slot.width,
+					h:	slot.height
+				},
+				bidfloor: slot.floor
+			}],
+			site: config.site,
+			tmax: config.tmax,
 			user: {}
 		};
 
 		return auctionRequest;
-	}
+	};
+
+	var displayDebugInformation = function (auction, bidder, result)
+	{
+		var bids;
+		var bid;
+
+		if (new Date().getTime() >= auction.timeout)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'timeout'
+			});
+
+			return;
+		}
+		else if (result === undefined)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'corrupted'
+			});
+
+			return;
+		}
+		else if (result.seatbid.length === 0)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'nobid'
+			});
+
+			return;
+		}
+		else if (result.seatbid[0].bid === undefined)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'corrupted'
+			});
+
+			return;
+		}
+
+		bids = result.seatbid[0].bid;
+
+		if (bids.length === 0)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'nobid'
+			});
+
+			return;
+		}
+
+		bid = bids[0];
+
+		if (bid.price === undefined || bid.creative === undefined)
+		{
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidder.id,
+				event:		'bid_filter',
+				reason:		'nobid'
+			});
+
+			return;
+		}
+
+		sendDebug(auction,
+		{
+			auction:	auction.id,
+			bidder:		bidder.id,
+			event:		'bid_valid',
+			price:		bid.price
+		});
+	};
 
 	var auctionEnd = function (auction, results)
 	{
+		var currentPrice;
 		var secondPrice;
 		var winner;
 
@@ -215,18 +325,20 @@
 		{
 			var result = results[i];
 
-			if (result === undefined || result.price === undefined || result.price <= 0)
+			if (result === undefined || result.bid === undefined || result.bid.price === undefined || result.bid.price <= 0)
 				continue;
 
-			if (winner === undefined || winner.price < result.price)
+			currentPrice = result.bid.price;
+
+			if (winner === undefined || winner.bid.price < currentPrice)
 			{
 				if (winner !== undefined)
-					secondPrice = winner.price;
+					secondPrice = winner.bid.price;
 
 				winner = result;
 			}
-			else if (secondPrice === undefined || result.price > secondPrice)
-				secondPrice = result.price;
+			else if (secondPrice === undefined || currentPrice > secondPrice)
+				secondPrice = currentPrice;
 		}
 
 		if (winner === undefined)
@@ -238,23 +350,18 @@
 
 		secondPrice += 0.01;
 
-		sendDebug
-		(
-			auction,
-			{
-				event:		'end',
-				auction:	auction.id,
-				winner:		winner.id,
-				price:		secondPrice
-			}
-		);
+		sendDebug(auction, {
+			event:		'end',
+			auction:	auction.id,
+			winner:		winner.id,
+			price:		secondPrice
+		});
 
 		makeSucceededHtml
 		(
-			winner.creative,
-			winner,
-			secondPrice,
-			'www.criteo.com'
+			winner.bid.creative,
+			winner.bid.nurl,
+			secondPrice
 		);
 	};
 
@@ -275,15 +382,11 @@
 
 	var auctionSend = function (auction, bidder)
 	{
-		var response = new Future();
 		var timeout = new Future();
 
-		sendQuery(bidder.bid_ep, auction.request).then(function (result)
+		setTimeout(function ()
 		{
-			var bids;
-			var bid;
-
-			if (new Date().getTime() >= auction.timeout)
+			if (timeout.signal())
 			{
 				sendDebug(auction,
 				{
@@ -292,108 +395,10 @@
 					event:		'bid_filter',
 					reason:		'timeout'
 				});
-
-				response.signal();
-
-				return;
 			}
-			else if (result === undefined)
-			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'corrupted'
-				});
+		}, auction.config.tmax);
 
-				response.signal();
-
-				return;
-			}
-			else if (result.seatbid.length === 0)
-			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'nobid'
-				});
-
-				response.signal();
-
-				return;
-			}
-			else if (result.seatbid[0].bid === undefined)
-			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'corrupted'
-				});
-
-				response.signal();
-
-				return;
-			}
-
-			bids = result.seatbid[0].bid;
-
-			if (bids.length === 0)
-			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'nobid'
-				});
-
-				response.signal();
-
-				return;
-			}
-
-			bid = bids[0];
-
-			if (bid.price === undefined || bid.creative === undefined)
-			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'nobid'
-				});
-
-				response.signal();
-
-				return;
-			}
-
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_valid',
-				price:		bid.price
-			});
-
-			response.signal
-			({
-				creative:	bid.creative,
-				id:			bidder.id,
-				notify:		bid.nurl,
-				price:		bid.price
-			});
-		});
-
-		setTimeout(function () { timeout.signal(); }, auction.timeout);
-
-		return Future.first(response, timeout);
+		return Future.first(sendQuery(bidder.bid_ep, auction.request), timeout);
 	};
 
 	// TODO: test country bl & language
@@ -420,7 +425,7 @@
 		return true;
 	}
 
-	var makeSucceededHtml = function (creativeCode, winner, secondPrice, clickUrl)
+	var makeSucceededHtml = function (creativeCode, notifyUrl, secondPrice)
 	{
 		var creativeImg;
 		var pixel;
@@ -428,12 +433,13 @@
 		creativeImg = document.createElement('div');
 		creativeImg.innerHTML  = creativeCode;
 
-		pixel = document.createElement('img');
-		pixel.height = '1px';
-		pixel.width = '1px';
-
-		pixel.src = winner.notify.replace('${AUCTION_PRICE}', secondPrice);
-		pixel.src = pixel.src.replace('${CLICK_URL}', clickUrl);
+		if (notifyUrl)
+		{
+			pixel = document.createElement('img');
+			pixel.height = '1px';
+			pixel.width = '1px';
+			pixel.src = notifyUrl.replace('${AUCTION_PRICE}', secondPrice);
+		}
 
 		document.body.appendChild(creativeImg);
 		document.body.appendChild(pixel);
