@@ -1,8 +1,18 @@
 {
-	"1": {
-		"bid_ep": "http://bidder.bidtorrent.io/criteoBid.php"
-	},
-	"2": {
-		"bid_ep": "http://bidder.bidtorrent.io/testBid.php"
-	}
+    "1": {
+        "bid_ep": "http://bidder.bidtorrent.io/criteoBid.php"
+    },
+    "2": {
+        "bidder_id" : 456,
+        "bid_ep": "http://bidder.bidtorrent.io/testBid.php",
+        "filters" : {
+            "sampling": 1.00,
+            "ctry_bl": ["FR", "US"],
+            "lang_bl": ["EU-us"],
+            "lang_wl": ["FR-fr"],
+            "cat_bl": ["IAB1-4"],
+            "cat_wl": ["IAB1-3", "IAB1-6"],
+            "pub": ["pr0n.com"]
+        }
+    }
 }

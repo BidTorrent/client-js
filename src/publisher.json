@@ -36,6 +36,5 @@
 		"instl": 1,
 		"secure": false
 	},
-	"timeout_soft": 100,
-	"timeout_hard": 200
+	"tmax": 100
 }

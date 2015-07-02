@@ -95,12 +95,12 @@
 			this.complete = complete;
 	};
 
-    var start = function (event)
+	var start = function (event)
 	{
 		var bidders = event.data.bidders;
 		var config = event.data.config;
-        var debug = event.data.debug;
-        var id = event.data.id;
+		var debug = event.data.debug;
+		var id = event.data.id;
 
 		Future
 			.bind
@@ -126,9 +126,9 @@
 			});
 	};
 
-    var everythingLoaded = function (bidders, config, debug)
+	var everythingLoaded = function (bidders, config, debug)
 	{
-        var makeGuid = function ()
+		var makeGuid = function ()
 		{
 			function S4()
 			{
@@ -141,19 +141,19 @@
 		}
 
 		var auction;
-        var id;
+		var id;
 
-        id = makeGuid();
+		id = makeGuid();
 
 		auction =
 		{
-            request:	formatBidRequest(id, config, config.slot),
+			request:	formatBidRequest(id, config, config.slot),
 			bidders:	bidders,
 			config:		config,
 			id:			id,
 			slot: 		config.slot.id,
 			timeout:	new Date().getTime() + config.timeout,
-            _debug:     debug
+			_debug:	 debug
 		}
 
 		sendDebug(auction,
@@ -170,10 +170,10 @@
 		});
 	}
 
-    var formatBidRequest = function (id, publisherConfig, slot)
+	var formatBidRequest = function (id, publisherConfig, slot)
 	{
 		var auctionRequest;
-        var impression;
+		var impression;
 
 		auctionRequest =
 		{
@@ -210,7 +210,7 @@
 		return auctionRequest;
 	}
 
-    var auctionEnd = function (auction, results)
+	var auctionEnd = function (auction, results)
 	{
 		var secondPrice;
 		var winner;
@@ -258,34 +258,34 @@
 
 		makeSucceededHtml
 		(
-            winner.creative,
-            winner,
-            secondPrice,
-            'www.criteo.com'
+			winner.creative,
+			winner,
+			secondPrice,
+			'www.criteo.com'
 		);
 	};
 
-    var auctionBegin = function (auction)
+	var auctionBegin = function (auction)
 	{
 		var futures = [];
 
-        for (var id in auction.bidders)
-        {
-            var bidder = auction.bidders[id];
+		for (var id in auction.bidders)
+		{
+			var bidder = auction.bidders[id];
 
-            if (acceptBidder(bidder, auction))
-                futures.push(auctionSend(auction, id, bidder));
-        }
+			if (acceptBidder(bidder, auction))
+				futures.push(auctionSend(auction, id, bidder));
+		}
 
 		return Future.bind.apply(null, futures);
 	};
 
-    var auctionSend = function (auction, bidderId, bidder)
+	var auctionSend = function (auction, bidderId, bidder)
 	{
 		var response = new Future();
 		var timeout = new Future();
 
-        sendQuery(bidder.bid_ep, auction.request).then(function (result)
+		sendQuery(bidder.bid_ep, auction.request).then(function (result)
 		{
 			var bids;
 			var bid;
@@ -332,7 +332,7 @@
 
 				return;
 			}
-			else if (result.seatbid[0].bid !== undefined)
+			else if (result.seatbid[0].bid === undefined)
 			{
 				sendDebug(auction,
 				{
@@ -403,25 +403,29 @@
 		return Future.first(response, timeout);
 	};
 
-    var acceptBidder = function (bidder, auction)
-    {
-        // TODO probably read configuration before
-        /*for (var propertyKey in bidder)
-        {
-            if (propertyKey === "filters")
-            {
-                for (var filterKey in bidder["filters"])
-                {
-                    if (filterKey == "sampling")
-                    {
+	// TODO: test country bl & language
+	var acceptBidder = function (bidder, auction)
+	{
+		var filters;
 
-                    }
-                }
-            }
-        }*/
+		if((filters = bidder.filters) === undefined)
+			return true;
 
-        return true;
-    }
+		if(filters.sampling !== undefined && Math.random() > filters.sampling)
+			return false;
+
+		if(filters.cat_bl !== undefined && auction.site !== undefined && auction.site.cat !== undefined)
+		{ 
+			for (catBl in filters.cat_bl)
+				if(auction.site.cat.contains(catBl))
+					return false;
+		}
+
+	   	if(filters.pub !== undefined && filters.pub === auction.config.site.publisher.name)
+	   		return false;
+
+		return true;
+	}
 
 	var makeSucceededHtml = function (creativeCode, winner, secondPrice, clickUrl)
 	{
@@ -436,7 +440,7 @@
 		pixel.width = '1px';
 
 		pixel.src = winner.notify.replace('${AUCTION_PRICE}', secondPrice);
-        pixel.src = pixel.src.replace('${CLICK_URL}', clickUrl);
+		pixel.src = pixel.src.replace('${CLICK_URL}', clickUrl);
 
 		document.body.appendChild(creativeImg);
 		document.body.appendChild(pixel);
