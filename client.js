@@ -13,6 +13,12 @@ bidTorrent = (function ()
 	{
 		var loader;
 
+		// Ensure required JavaScript features are supported
+		if ((typeof postMessage === 'undefined') ||
+		    (typeof XMLHttpRequest === 'undefined') ||
+		    (!('withCredentials' in new XMLHttpRequest()) && (typeof XDomainRequest === 'undefined')))
+			return;
+
 		// Create the actual loading function
 		loader = function ()
 		{
