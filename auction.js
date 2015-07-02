@@ -96,45 +96,40 @@
 
     var formatBidRequest = function (id, publisherConfig, slot)
 	{
-		var auctionRequest = {};
+		var auctionRequest;
         var impression;
 
-		auctionRequest["user"] = {};
-		//auctionRequest["user"]["id"] = "a%3A1%3A%7Bi%3A42%3Bs%3A36%3A%22abc2ccbf-2636-4cf1-93b1-5f0f521ada22%22%3B%7D";
-		//auctionRequest["user"]["buyerid"] = 1000;
-
-		auctionRequest["site"] = {};
-		auctionRequest["site"]["cat"] = publisherConfig["site"]["cat"];
-		auctionRequest["site"]["domain"] = publisherConfig["site"]["domain"];
-		auctionRequest["site"]["mobile"] = publisherConfig["site"]["mobile"];
-		auctionRequest["site"]["publisher"] = {};
-		auctionRequest["site"]["publisher"]["id"] = publisherConfig["site"]["id"];
-		auctionRequest["site"]["publisher"]["name"] = publisherConfig["site"]["name"];
-
-		auctionRequest["badv"] = publisherConfig["badv"];
-		auctionRequest["bcat"] = publisherConfig["bcat"];
-		auctionRequest["cur"] = publisherConfig["cur"];
-
-		auctionRequest["device"] = {};
-		//auctionRequest["device"]["geo"] = {};
-		//auctionRequest["device"]["geo"]["country"] = myCountry;
-		//auctionRequest["device"]["ip"] = myIp;
-		//auctionRequest["device"]["js"] = 1;
-		//auctionRequest["device"]["language"] = myLanguage;
-		//auctionRequest["device"]["make"] = myMake;
-		//auctionRequest["device"]["model"] = myModel;
-		//auctionRequest["device"]["os"] = myOs;
-		//auctionRequest["device"]["ua"] = myUa;
-
-		auctionRequest["id"] = id;
-
-        impression = publisherConfig["imp"]
-        impression["banner"]["w"] = slot.width;
-        impression["banner"]["h"] = slot.height;
-        impression["banner"]["id"] = slot.id;
-        auctionRequest["imp"] = [ publisherConfig["imp"] ];
-
-		auctionRequest["tmax"] = publisherConfig["timeout_soft"];
+		auctionRequest =
+		{
+			badv: publisherConfig.badv,
+			bcat: publisherConfig.bcat,
+			cur: publisherConfig.cur,
+			device: {
+				//auctionRequest["device"]["geo"] = {};
+				//auctionRequest["device"]["geo"]["country"] = myCountry;
+				//auctionRequest["device"]["ip"] = myIp;
+				//auctionRequest["device"]["js"] = 1;
+				//auctionRequest["device"]["language"] = myLanguage;
+				//auctionRequest["device"]["make"] = myMake;
+				//auctionRequest["device"]["model"] = myModel;
+				//auctionRequest["device"]["os"] = myOs;
+				//auctionRequest["device"]["ua"] = myUa;
+			},
+			id: id,
+			img: [{
+				banner: {
+					h: slot.height,
+					id: slot.id,
+					w: slot.width
+				}
+			}],
+			site: publisherConfig.site,
+			tmax: publisherConfig.tmax,
+			user: {
+//				id: 'a%3A1%3A%7Bi%3A42%3Bs%3A36%3A%22abc2ccbf-2636-4cf1-93b1-5f0f521ada22%22%3B%7D',
+//				buyerid: 1000
+			}
+		};
 
 		return auctionRequest;
 	}
