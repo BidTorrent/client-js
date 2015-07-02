@@ -28,10 +28,10 @@
 			function (publisherConfig)
 			{
                 config.publisherConfig = publisherConfig;
-                publisherConfigLoaded(config, debug);
+                publisherConfigLoaded(config, debug ? id : undefined);
 			});
 	};
-    
+
     var publisherConfigLoaded = function (config, debug)
 	{
 		sendQuery(
@@ -43,7 +43,7 @@
 				biddersConfigLoaded(config, debug);
 			});
 	}
-    
+
     var biddersConfigLoaded = function (config, debug)
 	{
         var makeGuid = function ()
@@ -57,10 +57,10 @@
 				"-" + S4().substr(0,3) + "-" +
 				S4() + "-" + S4() + S4() + S4()).toLowerCase();
 		}
-        
+
 		var auction;
         var id;
-        
+
         id = makeGuid();
 
 		auction =
@@ -73,7 +73,7 @@
 			results:	[],
 			slot: 		config.slot.id,
 			timeout:	new Date().getTime() + config.timeout,
-            _debug:     debug ? id : undefined
+            _debug:     debug
 		}
 
 		sendDebug(auction,
@@ -97,7 +97,7 @@
 
 		auctionBegin(auction);
 	}
-    
+
     var formatBidRequest = function (id, publisherConfig, slot)
 	{
 		var auctionRequest = {};
@@ -118,7 +118,7 @@
 		auctionRequest["badv"] = publisherConfig["badv"];
 		auctionRequest["bcat"] = publisherConfig["bcat"];
 		auctionRequest["cur"] = publisherConfig["cur"];
-        
+
 		auctionRequest["device"] = {};
 		//auctionRequest["device"]["geo"] = {};
 		//auctionRequest["device"]["geo"]["country"] = myCountry;
@@ -137,12 +137,12 @@
         impression["banner"]["h"] = slot.height;
         impression["banner"]["id"] = slot.id;
         auctionRequest["imp"] = [ publisherConfig["imp"] ];
-        
+
 		auctionRequest["tmax"] = publisherConfig["timeout_soft"];
 
 		return auctionRequest;
 	}
-    
+
     var auctionEnd = function (auction)
 	{
 		var secondPrice;
@@ -197,24 +197,24 @@
             'www.criteo.com'
 		);
 	};
-    
+
     var auctionBegin = function (auction)
 	{
         for (var bidderId in auction.bidders)
         {
             var bidder;
-            
+
             bidder = auction.bidders[bidderId];
-            
+
             if (acceptBidder(bidder, auction))
             {
                 ++auction.pending;
-            
+
                 auctionSend(auction, bidderId, bidder);
             }
         }
 	};
-    
+
     var auctionSend = function (auction, bidderId, bidder)
 	{
         sendQuery
@@ -225,7 +225,7 @@
 			{
                 var bids;
                 var bid;
-                
+
 				if (auction.pending === 0)
 					return;
 
@@ -238,7 +238,7 @@
 						event:		'bid_filter',
 						reason:		'timeout'
 					});
-                    
+
                     return;
 				}
 				else if (result === undefined)
@@ -250,10 +250,10 @@
 						event:		'bid_filter',
 						reason:		'corrupted'
 					});
-                    
+
                     return;
 				}
-                else if (result.seatbid.length == 0)
+                else if (result.seatbid.length === 0)
                 {
                     sendDebug(auction,
 					{
@@ -262,10 +262,10 @@
 						event:		'bid_filter',
 						reason:		'nobid'
 					});
-                    
+
                     return;
                 }
-                else if (!result.seatbid[0].hasOwnProperty("bid"))
+                else if (result.seatbid[0].bid !== undefined)
                 {
                     sendDebug(auction,
 					{
@@ -274,13 +274,13 @@
 						event:		'bid_filter',
 						reason:		'corrupted'
 					});
-                    
+
                     return;
                 }
-                
-                bids = result.seatbid[0]["bid"];
-                
-                if (bids.length == 0)
+
+                bids = result.seatbid[0].bid;
+
+                if (bids.length === 0)
                 {
                     sendDebug(auction,
 					{
@@ -289,12 +289,12 @@
 						event:		'bid_filter',
 						reason:		'nobid'
 					});
-                    
+
                     return;
                 }
-                
+
                 bid = bids[0];
-                
+
                 if (bid.price === undefined || bid.creative === undefined)
                 {
                     sendDebug(auction,
@@ -304,7 +304,7 @@
 						event:		'bid_filter',
 						reason:		'nobid'
 					});
-                    
+
                     return;
                 }
 				else
@@ -343,13 +343,13 @@
                 {
                     if (filterKey == "sampling")
                     {
-                        
+
                     }
                 }
             }
         }*/
-        
-        return true; 
+
+        return true;
     }
 
 	var makeSucceededHtml = function (creativeCode, winner, secondPrice, clickUrl)
@@ -364,7 +364,7 @@
 		pixel.height = '1px';
 		pixel.width = '1px';
 
-		pixel.src = winner.notify.replace('${AUCTION_PRICE}', secondPrice.toString());
+		pixel.src = winner.notify.replace('${AUCTION_PRICE}', secondPrice);
         pixel.src = pixel.src.replace('${CLICK_URL}', clickUrl);
 
 		document.body.appendChild(creativeImg);
@@ -373,10 +373,8 @@
 
 	var sendDebug = function (auction, data)
 	{
-		if (!auction.config.debug)
-			return;
-
-		window.parent.postMessage(data, auction.config.publisher);
+		if (auction._debug !== undefined)
+			window.parent.postMessage({data: data, id: auction._debug}, auction.config.publisher);
 	};
 
 	var sendQuery = function (url, data, complete)
