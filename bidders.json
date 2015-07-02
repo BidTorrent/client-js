@@ -1,17 +1,5 @@
 {
 	"1": {
-		"bid_ep": "http://bidder.bidtorrent.io/bid.php?bidder=criteo"
-	},
-	"2": {
-		"bid_ep": "http://bidder.bidtorrent.io/bid.php?bidder=dental"
-	},
-	"3": {
-		"bid_ep": "http://bidder.bidtorrent.io/bid.php?bidder=burger"
-	},
-	"4": {
-		"bid_ep": "http://bidder.bidtorrent.io/bid.php?bidder=pets"
-	},
-	"5": {
-		"bid_ep": "http://bidder.bidtorrent.io/bid.php?bidder=kitten"
+		"bid_ep": "http://bidder.bidtorrent.io/criteoBid.php"
 	}
 }

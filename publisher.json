@@ -1,12 +1,41 @@
 {
-    "adv_bl": ["some.advertiser.com", ...], /* Blacklisted advertisers */
-    "bid_bl": [ "blBidderName"], /* Blacklisted bidder from the list */
-    "cat_bl": ["IAB1-4"], /* Blacklisted IAB categories */
-    "media_bl": ["Flash"],
-    "country": "FR",
-    "cur": "EUR",
-    "floor": 0.01,
-    "timeout_soft": 100,
-    "timeout_hard": 200,
-    "floor": 0.01
+	"site": {
+		"cat": [
+			"IAB1",
+			"IAB9",
+			"IAB9-30",
+			"entertainment",
+			"games"
+		],
+		"domain": "www.bbc.com",
+		"mobile": 1,
+		"publisher": {
+			"id": "876487564786",
+			"name": "Yahoo",
+			"country": "FR"
+		}
+	},
+	"badv": [
+		"porn.com",
+		"badcontent2.net",
+		"competitivegame.com"
+	],
+	"bcat": [
+		"IAB6-7",
+		"IAB7-3",
+		"IAB7-28"
+	],
+	"cur": "USD",
+	"imp": {
+		"banner": {
+			"btype": [
+				4
+			]
+		},
+		"bidfloor": 1.75,
+		"instl": 1,
+		"secure": false
+	},
+	"timeout_soft": 100,
+	"timeout_hard": 200
 }
