@@ -113,18 +113,29 @@
 				var bidders = result[0];
 				var config = result[1];
 
-				config = config || {};
-				config.floor = config.floor || 0.01;
-				config.slot = config.slot || {};
-				config.slot.width = config.slot.width || 300;
-				config.slot.height = config.slot.height || 250;
-				config.passback = config.passback || '';
-				config.publisher = config.publisher || document.location.href;
-				config.timeout = config.timeout || 500;
+				applyDefaultValue(config);
 
 				everythingLoaded(bidders, config, debug ? id : undefined);
 			});
 	};
+
+	var applyDefaultValue = function(config)
+	{
+		config = config || {};
+		config.cur = config.cur || "EUR";
+		config.imp = config.imp || {};
+		config.imp.bidfloor = config.imp.bidfloor || 0.01;
+		config.imp.banner = config.imp.banner || {};
+		config.imp.banner.w = config.imp.banner.w || 300;
+		config.imp.banner.h = config.imp.banner.h || 250;
+		config.passback = config.passback || '';
+		config.site = config.site || {};
+		config.site.domain = config.site.domain || "bidtorrent.com";
+		config.site.publisher = config.site.publisher || {};
+		config.site.publisher.id = config.site.publisher.id || 123;
+		config.site.publisher.country = config.site.publisher.country || "FR";
+		config.tmax = config.tmax || 500;
+	}
 
 	var everythingLoaded = function (bidders, config, debug)
 	{
@@ -147,11 +158,10 @@
 
 		auction =
 		{
-			request:	formatBidRequest(id, config, config.slot),
+			request:	formatBidRequest(id, config),
 			bidders:	bidders,
 			config:		config,
 			id:			id,
-			slot: 		config.slot.id,
 			timeout:	new Date().getTime() + config.timeout,
 			_debug:	 debug
 		}
@@ -159,7 +169,6 @@
 		sendDebug(auction,
 		{
 			event:		'begin',
-			container:	config.slot.id,
 			auction:	auction.id,
 			bidders:	bidders
 		});
@@ -170,7 +179,7 @@
 		});
 	}
 
-	var formatBidRequest = function (id, publisherConfig, slot)
+	var formatBidRequest = function (id, publisherConfig)
 	{
 		var auctionRequest;
 		var impression;
@@ -192,13 +201,7 @@
 				//auctionRequest["device"]["ua"] = myUa;
 			},
 			id: id,
-			img: [{
-				banner: {
-					h: slot.height,
-					id: slot.id,
-					w: slot.width
-				}
-			}],
+			img: [publisherConfig.img],
 			site: publisherConfig.site,
 			tmax: publisherConfig.tmax,
 			user: {
@@ -249,7 +252,6 @@
 			auction,
 			{
 				event:		'end',
-				container:	auction.slot,
 				auction:	auction.id,
 				winner:		winner.id,
 				price:		secondPrice
@@ -421,7 +423,7 @@
 					return false;
 		}
 
-	   	if(filters.pub !== undefined && filters.pub === auction.config.site.publisher.name)
+		if(filters.pub !== undefined && filters.pub === auction.config.site.publisher.name)
 	   		return false;
 
 		return true;
@@ -449,7 +451,7 @@
 	var sendDebug = function (auction, data)
 	{
 		if (auction._debug !== undefined)
-			window.parent.postMessage({data: data, id: auction._debug}, auction.config.publisher);
+			window.parent.postMessage({data: data, id: auction._debug}, document.location.href);
 	};
 
 	var sendQuery = function (url, data)
