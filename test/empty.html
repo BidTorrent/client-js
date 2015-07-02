@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+	</head>
+	<body>
+		<div id="desktop_ad_top" style="width: 275px; height: 230px;"></div>
+		<script type="text/javascript" src="../src/client.js"></script>
+		<script type="text/javascript" src="../src/debug.js"></script>
+		<script type="text/javascript">
+			bidTorrent({
+				auction:	'../src/auction.html',
+				bidders:	'../src/bidders.json',
+				config: 	'../src/publisher.json',
+				debug:		true,
+				slots:		[{element: 'desktop_ad_top'}]
+			});
+		</script>
+	</body>
+</html>
