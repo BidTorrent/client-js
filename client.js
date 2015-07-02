@@ -51,31 +51,6 @@ bidTorrent = (function ()
 				slot.height = slot.height || slot.element.offsetHeight;
 				slot.width = slot.width || slot.element.offsetWidth;
 
-				// Create and append debug mode iframe
-				if (init.debug)
-				{
-					debug = document.createElement('div');
-					debug.className = 'bidtorrent-debug';
-					debug.style.width = slot.width + 'px';
-
-					document.body.appendChild(debug);
-
-					parse = document.createElement('a');
-					parse.href = init.auction;
-
-					addEventListener('message', (function (debug, current)
-					{
-						return function (message)
-						{
-							if (message.origin === parse.protocol + '//' + parse.hostname && message.data.id === current)
-							{
-								for (var i = 0; i < probes.length; ++i)
-									probes[i](debug, message.data.data);
-							}
-						};
-					})(debug, i), true);
-				}
-
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');
 				iframe.onload = (function (current)
@@ -98,6 +73,31 @@ bidTorrent = (function ()
 				iframe.src = init.auction;
 
 				slot.element.appendChild(iframe);
+
+				// Create and append debug mode iframe
+				if (init.debug)
+				{
+					debug = document.createElement('div');
+					debug.className = 'bidtorrent-debug';
+					debug.style.width = slot.width + 'px';
+
+					slot.element.appendChild(debug);
+
+					parse = document.createElement('a');
+					parse.href = init.auction;
+
+					addEventListener('message', (function (debug, current)
+					{
+						return function (message)
+						{
+							if (message.origin === parse.protocol + '//' + parse.hostname && message.data.id === current)
+							{
+								for (var i = 0; i < probes.length; ++i)
+									probes[i](debug, message.data.data);
+							}
+						};
+					})(debug, i), true);
+				}
 			}
 		};
 
