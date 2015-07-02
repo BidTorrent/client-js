@@ -169,7 +169,7 @@
 			config:		config,
 			id:			id,
 			timeout:	new Date().getTime() + config.tmax,
-			_debug:	 debug
+			_debug:		debug
 		}
 
 		sendDebug(auction,
@@ -315,7 +315,9 @@
 
 	var auctionEnd = function (auction, results)
 	{
+		var bid;
 		var currentPrice;
+		var seatbid;
 		var secondPrice;
 		var winner;
 
@@ -325,17 +327,27 @@
 		{
 			var result = results[i];
 
-			if (result === undefined || result.bid === undefined || result.bid.price === undefined || result.bid.price <= 0)
+			if (result === undefined || result.seatbid === undefined)
 				continue;
 
-			currentPrice = result.bid.price;
+			seatbid = result.seatbid[0];
 
-			if (winner === undefined || winner.bid.price < currentPrice)
+			if (seatbid === undefined || seatbid.bid === undefined)
+				continue;
+
+			bid = seatbid.bid[0];
+
+			if (bid === undefined || bid.price === undefined || bid.price <= 0)
+				continue;
+
+			currentPrice = bid.price;
+
+			if (winner === undefined || winner.price < currentPrice)
 			{
 				if (winner !== undefined)
-					secondPrice = winner.bid.price;
+					secondPrice = winner.price;
 
-				winner = result;
+				winner = bid;
 			}
 			else if (secondPrice === undefined || currentPrice > secondPrice)
 				secondPrice = currentPrice;
@@ -353,14 +365,14 @@
 		sendDebug(auction, {
 			event:		'end',
 			auction:	auction.id,
-			winner:		winner.id,
+			winner:		winner.id, // FIXME: wrong ID
 			price:		secondPrice
 		});
 
 		makeSucceededHtml
 		(
-			winner.bid.creative,
-			winner.bid.nurl,
+			winner.creative,
+			winner.nurl,
 			secondPrice
 		);
 	};
@@ -406,20 +418,20 @@
 	{
 		var filters;
 
-		if((filters = bidder.filters) === undefined)
+		if ((filters = bidder.filters) === undefined)
 			return true;
 
-		if(filters.sampling !== undefined && Math.random() > filters.sampling)
+		if (filters.sampling !== undefined && Math.random() > filters.sampling)
 			return false;
 
-		if(filters.cat_bl !== undefined && auction.site !== undefined && auction.site.cat !== undefined)
+		if (filters.cat_bl !== undefined && auction.site !== undefined && auction.site.cat !== undefined)
 		{ 
-			for (catBl in filters.cat_bl)
-				if(auction.site.cat.contains(catBl))
+			for (var cat in filters.cat_bl)
+				if (auction.site.cat.contains(cat))
 					return false;
 		}
 
-		if(filters.pub !== undefined && filters.pub === auction.config.site.publisher.name)
+		if (filters.pub !== undefined && filters.pub === auction.config.site.publisher.name)
 	   		return false;
 
 		return true;
@@ -433,16 +445,17 @@
 		creativeImg = document.createElement('div');
 		creativeImg.innerHTML  = creativeCode;
 
+		document.body.appendChild(creativeImg);
+
 		if (notifyUrl)
 		{
 			pixel = document.createElement('img');
 			pixel.height = '1px';
 			pixel.width = '1px';
 			pixel.src = notifyUrl.replace('${AUCTION_PRICE}', secondPrice);
-		}
 
-		document.body.appendChild(creativeImg);
-		document.body.appendChild(pixel);
+			document.body.appendChild(pixel);
+		}
 	}
 
 	var sendDebug = function (auction, data)
