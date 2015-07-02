@@ -6,38 +6,40 @@
 {
 	var Future = function ()
 	{
+		this.arguments = undefined;
 		this.complete = undefined;
-		this.ready = false;
-		this.value = undefined;
 	};
 
 	Future.bind = function ()
 	{
 		var complete;
 		var future;
-		var values;
+		var results;
 		var wait;
 
-		complete = function (index)
-		{
-			return function (value)
-			{
-				values[index] = value;
-
-				if (--wait <= 0)
-					future.signal(values);
-			};
-		};
-
 		future = new Future();
-		values = new Array(arguments.length);
-		wait = arguments.length;
-
-		for (var i = 0; i < arguments.length; ++i)
-			arguments[i].then(complete(i));
 
 		if (arguments.length <= 0)
-			future.signal(values);
+			future.signal();
+		else
+		{
+			complete = function (index)
+			{
+				return function ()
+				{
+					results[index] = arguments;
+
+					if (--wait <= 0)
+						future.signal.apply(future, results);
+				};
+			};
+
+			results = new Array(arguments.length);
+			wait = arguments.length;
+
+			for (var i = 0; i < arguments.length; ++i)
+				arguments[i].then(complete(i));
+		}
 
 		return future;
 	};
@@ -50,7 +52,7 @@
 
 		complete = function (futures)
 		{
-			return function (value)
+			return function ()
 			{
 				if (wait)
 				{
@@ -59,7 +61,7 @@
 					for (var i = 0; i < futures.length; ++i)
 						futures[i].signal();
 
-					future.signal(value);
+					future.signal.apply(future, arguments);
 				}
 			};
 		};
@@ -73,34 +75,33 @@
 		return future;
 	};
 
-	Future.make = function (value)
+	Future.make = function ()
 	{
 		var future;
 
 		future = new Future();
-		future.signal(value);
+		future.signal.apply(future, arguments);
 
 		return future;
 	};
 
-	Future.prototype.signal = function (value)
+	Future.prototype.signal = function ()
 	{
-		if (this.ready)
+		if (this.arguments !== undefined)
 			return false;
 
-		this.ready = true;
-		this.value = value;
+		this.arguments = arguments;
 
 		if (this.complete !== undefined)
-			this.complete(value);
+			this.complete.apply(null, arguments);
 
 		return true;
 	};
 
 	Future.prototype.then = function (complete)
 	{
-		if (this.ready)
-			complete(this.value);
+		if (this.arguments !== undefined)
+			complete.apply(null, this.arguments);
 		else
 			this.complete = complete;
 	};
@@ -119,10 +120,10 @@
 				typeof bidders === 'string' ? sendQuery(bidders) : Future.make(bidders),
 				typeof config === 'string' ? sendQuery(config) : Future.make(config)
 			)
-			.then(function(result)
+			.then(function(biddersArgs, configArgs)
 			{
-				var bidders = result[0];
-				var config = result[1];
+				var bidders = biddersArgs[0];
+				var config = configArgs[0];
 
 				applyDefaultValue(config);
 
@@ -167,8 +168,8 @@
 			request:	formatBidRequest(id, config, slot),
 			bidders:	bidders,
 			config:		config,
+			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
-			timeout:	new Date().getTime() + config.tmax,
 			_debug:		debug
 		}
 
@@ -179,13 +180,9 @@
 			bidders:	bidders
 		});
 
-		auctionBegin(auction).then(function (results)
+		auctionBegin(auction).then(function ()
 		{
-			// FIXME: ugly
-			for (var i = 0; i < bidders.length; ++i)
-				displayDebugInformation(auction, bidders[i], results[i]);
-
-			auctionEnd(auction, results);
+			auctionEnd(auction, bidders, arguments);
 		});
 	}
 
@@ -220,133 +217,95 @@
 		return auctionRequest;
 	};
 
-	var displayDebugInformation = function (auction, bidder, result)
-	{
-		var bids;
-		var bid;
-
-		if (new Date().getTime() >= auction.timeout)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'timeout'
-			});
-
-			return;
-		}
-		else if (result === undefined)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'corrupted'
-			});
-
-			return;
-		}
-		else if (result.seatbid.length === 0)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'nobid'
-			});
-
-			return;
-		}
-		else if (result.seatbid[0].bid === undefined)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'corrupted'
-			});
-
-			return;
-		}
-
-		bids = result.seatbid[0].bid;
-
-		if (bids.length === 0)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'nobid'
-			});
-
-			return;
-		}
-
-		bid = bids[0];
-
-		if (bid.price === undefined || bid.creative === undefined)
-		{
-			sendDebug(auction,
-			{
-				auction:	auction.id,
-				bidder:		bidder.id,
-				event:		'bid_filter',
-				reason:		'nobid'
-			});
-
-			return;
-		}
-
-		sendDebug(auction,
-		{
-			auction:	auction.id,
-			bidder:		bidder.id,
-			event:		'bid_valid',
-			price:		bid.price
-		});
-	};
-
-	var auctionEnd = function (auction, results)
+	var auctionEnd = function (auction, bidders, results)
 	{
 		var bid;
 		var currentPrice;
+		var index;
 		var seatbid;
 		var secondPrice;
+		var timeout;
 		var winner;
 
 		secondPrice = auction.config.floor;
+		timeout = new Date().getTime() >= auction.timeout;
 
 		for (var i = 0; i < results.length; ++i)
 		{
-			var result = results[i];
+			var result = results[i][0];
+
+			if (timeout)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_filter',
+					reason:		'timeout'
+				});
+
+				continue;
+			}
 
 			if (result === undefined || result.seatbid === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_filter',
+					reason:		'empty'
+				});
+
 				continue;
+			}
 
 			seatbid = result.seatbid[0];
 
 			if (seatbid === undefined || seatbid.bid === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_filter',
+					reason:		'nobid'
+				});
+
 				continue;
+			}
 
 			bid = seatbid.bid[0];
 
-			if (bid === undefined || bid.price === undefined || bid.price <= 0)
+			if (bid === undefined || bid.creative === undefined || bid.price === undefined || bid.price <= 0)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_filter',
+					reason:		'corrupted'
+				});
+
 				continue;
+			}
 
 			currentPrice = bid.price;
+
+			sendDebug(auction,
+			{
+				auction:	auction.id,
+				bidder:		bidders[i].id,
+				event:		'bid_valid',
+				price:		currentPrice
+			});
 
 			if (winner === undefined || winner.price < currentPrice)
 			{
 				if (winner !== undefined)
 					secondPrice = winner.price;
 
+				index = i;
 				winner = bid;
 			}
 			else if (secondPrice === undefined || currentPrice > secondPrice)
@@ -362,10 +321,11 @@
 
 		secondPrice += 0.01;
 
-		sendDebug(auction, {
+		sendDebug(auction,
+		{
 			event:		'end',
 			auction:	auction.id,
-			winner:		winner.id, // FIXME: wrong ID
+			winner:		bidders[index].id,
 			price:		secondPrice
 		});
 
@@ -398,7 +358,7 @@
 
 		setTimeout(function ()
 		{
-			if (timeout.signal())
+			if (timeout.signal(/*bidder*/))
 			{
 				sendDebug(auction,
 				{
@@ -476,7 +436,10 @@
 		{
 			var json;
 
-			if (xhr.readyState == 4 && ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 0))
+			if (xhr.readyState !== 4)
+				return;
+
+			if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
 			{
 				try
 				{
@@ -486,9 +449,11 @@
 				{
 					json = undefined;
 				}
-
-				future.signal(json);
 			}
+			else
+				json = undefined;
+
+			future.signal(json);
 		};
 
 		if (data !== undefined)
