@@ -190,24 +190,15 @@
 			bcat: publisherConfig.bcat,
 			cur: publisherConfig.cur,
 			device: {
-				//auctionRequest["device"]["geo"] = {};
-				//auctionRequest["device"]["geo"]["country"] = myCountry;
-				//auctionRequest["device"]["ip"] = myIp;
-				//auctionRequest["device"]["js"] = 1;
-				//auctionRequest["device"]["language"] = myLanguage;
-				//auctionRequest["device"]["make"] = myMake;
-				//auctionRequest["device"]["model"] = myModel;
-				//auctionRequest["device"]["os"] = myOs;
-				//auctionRequest["device"]["ua"] = myUa;
+				js: 1,
+				language: navigator.language,
+				ua: navigator.userAgent
 			},
 			id: id,
 			img: [publisherConfig.img],
 			site: publisherConfig.site,
 			tmax: publisherConfig.tmax,
-			user: {
-//				id: 'a%3A1%3A%7Bi%3A42%3Bs%3A36%3A%22abc2ccbf-2636-4cf1-93b1-5f0f521ada22%22%3B%7D',
-//				buyerid: 1000
-			}
+			user: {}
 		};
 
 		return auctionRequest;
