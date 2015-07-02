@@ -36,6 +36,9 @@
 		for (var i = 0; i < arguments.length; ++i)
 			arguments[i].then(complete(i));
 
+		if (arguments.length <= 0)
+			future.signal(result);
+
 		return future;
 	};
 
@@ -74,6 +77,9 @@
 
 	Future.prototype.signal = function (value)
 	{
+		if (this.ready)
+			return;
+
 		this.ready = true;
 		this.value = value;
 
@@ -145,8 +151,6 @@
 			bidders:	bidders,
 			config:		config,
 			id:			id,
-			pending:	0,
-			results:	[],
 			slot: 		config.slot.id,
 			timeout:	new Date().getTime() + config.timeout,
             _debug:     debug
@@ -160,18 +164,10 @@
 			bidders:	bidders
 		});
 
-		setTimeout(function ()
+		auctionBegin(auction).then(function (results)
 		{
-			if (auction.pending === 0)
-				return;
-
-			auction.pending = 0;
-
-			auctionEnd(auction);
-		},
-		config.timeout);
-
-		auctionBegin(auction);
+			auctionEnd(auction, results);
+		});
 	}
 
     var formatBidRequest = function (id, publisherConfig, slot)
@@ -214,18 +210,18 @@
 		return auctionRequest;
 	}
 
-    var auctionEnd = function (auction)
+    var auctionEnd = function (auction, results)
 	{
 		var secondPrice;
 		var winner;
 
 		secondPrice = auction.config.floor;
 
-		for (var i = 0; i < auction.results.length; ++i)
+		for (var i = 0; i < results.length; ++i)
 		{
-			var result = auction.results[i];
+			var result = results[i];
 
-			if (result.price === undefined || result.price <= 0)
+			if (result === undefined || result.price === undefined || result.price <= 0)
 				continue;
 
 			if (winner === undefined || winner.price < result.price)
@@ -271,30 +267,28 @@
 
     var auctionBegin = function (auction)
 	{
-        for (var bidderId in auction.bidders)
-        {
-            var bidder;
+		var futures = [];
 
-            bidder = auction.bidders[bidderId];
+        for (var id in auction.bidders)
+        {
+            var bidder = auction.bidders[id];
 
             if (acceptBidder(bidder, auction))
-            {
-                ++auction.pending;
-
-                auctionSend(auction, bidderId, bidder);
-            }
+                futures.push(auctionSend(auction, id, bidder));
         }
+
+		return Future.bind.apply(null, futures);
 	};
 
     var auctionSend = function (auction, bidderId, bidder)
 	{
+		var response = new Future();
+		var timeout = new Future();
+
         sendQuery(bidder.bid_ep, auction.request).then(function (result)
 		{
 			var bids;
 			var bid;
-
-			if (auction.pending === 0)
-				return;
 
 			if (new Date().getTime() >= auction.timeout)
 			{
@@ -305,6 +299,8 @@
 					event:		'bid_filter',
 					reason:		'timeout'
 				});
+
+				response.signal();
 
 				return;
 			}
@@ -318,6 +314,8 @@
 					reason:		'corrupted'
 				});
 
+				response.signal();
+
 				return;
 			}
 			else if (result.seatbid.length === 0)
@@ -330,6 +328,8 @@
 					reason:		'nobid'
 				});
 
+				response.signal();
+
 				return;
 			}
 			else if (result.seatbid[0].bid !== undefined)
@@ -341,6 +341,8 @@
 					event:		'bid_filter',
 					reason:		'corrupted'
 				});
+
+				response.signal();
 
 				return;
 			}
@@ -357,6 +359,8 @@
 					reason:		'nobid'
 				});
 
+				response.signal();
+
 				return;
 			}
 
@@ -372,30 +376,31 @@
 					reason:		'nobid'
 				});
 
+				response.signal();
+
 				return;
 			}
-			else
+
+			sendDebug(auction,
 			{
-				sendDebug(auction,
-				{
-					auction:	auction.id,
-					bidder:		bidderId,
-					event:		'bid_valid',
-					price:		bid.price
-				});
+				auction:	auction.id,
+				bidder:		bidderId,
+				event:		'bid_valid',
+				price:		bid.price
+			});
 
-				auction.results.push
-				({
-					creative:	bid.creative,
-					id:			bidderId,
-					notify:		bid.nurl,
-					price:		bid.price
-				});
-			}
-
-			if (--auction.pending === 0)
-				auctionEnd(auction);
+			response.signal
+			({
+				creative:	bid.creative,
+				id:			bidderId,
+				notify:		bid.nurl,
+				price:		bid.price
+			});
 		});
+
+		setTimeout(function () { timeout.signal(); }, auction.timeout);
+
+		return Future.first(response, timeout);
 	};
 
     var acceptBidder = function (bidder, auction)
