@@ -4,40 +4,120 @@
 */
 (function ()
 {
+	var Future = function ()
+	{
+		this.complete = undefined;
+		this.ready = false;
+		this.value = undefined;
+	};
+
+	Future.bind = function ()
+	{
+		var complete;
+		var future;
+		var result;
+		var wait;
+
+		complete = function (index)
+		{
+			return function (value)
+			{
+				result[index] = value;
+
+				if (--wait <= 0)
+					future.signal(result);
+			};
+		};
+
+		future = new Future();
+		result = new Array(arguments.length);
+		wait = arguments.length;
+
+		for (var i = 0; i < arguments.length; ++i)
+			arguments[i].then(complete(i));
+
+		return future;
+	};
+
+	Future.first = function ()
+	{
+		var complete;
+		var future;
+		var wait;
+
+		complete = function (value)
+		{
+			if (wait)
+				future.signal(value);
+
+			wait = false;
+		};
+
+		future = new Future();
+		wait = true;
+
+		for (var i = 0; i < arguments.length; ++i)
+			arguments[i].then(complete);
+
+		return future;
+	};
+
+	Future.make = function (value)
+	{
+		var future;
+
+		future = new Future();
+		future.signal(value);
+
+		return future;
+	};
+
+	Future.prototype.signal = function (value)
+	{
+		this.ready = true;
+		this.value = value;
+
+		if (this.complete !== undefined)
+			this.complete(value);
+	};
+
+	Future.prototype.then = function (complete)
+	{
+		if (this.ready)
+			complete(this.value);
+		else
+			this.complete = complete;
+	};
+
     var start = function (event)
 	{
 		var bidders = event.data.bidders;
 		var config = event.data.config;
         var debug = event.data.debug;
         var id = event.data.id;
-		var then;
 
-		afterBidders = function (bidders)
-		{
-			if (typeof config === 'string')
-				sendQuery(config, undefined, function (config) { afterConfig(bidders, config); });
-			else
-				then(function (config) { afterConfig(bidders, config); });
-		};
+		Future
+			.bind
+			(
+				typeof bidders === 'string' ? sendQuery(bidders) : Future.make(bidders),
+				typeof config === 'string' ? sendQuery(config) : Future.make(config)
+			)
+			.then(function(result)
+			{
+				var bidders = result[0];
+				var config = result[1];
 
-		afterConfig = function (bidders, config)
-		{
-			config = config || {};
-			config.floor = config.floor || 0.01;
-			config.slot = config.slot || {};
-			config.slot.width = config.slot.width || 300;
-			config.slot.height = config.slot.height || 250;
-			config.passback = config.passback || '';
-			config.publisher = config.publisher || document.location.href;
-			config.timeout = config.timeout || 500;
+				config = config || {};
+				config.floor = config.floor || 0.01;
+				config.slot = config.slot || {};
+				config.slot.width = config.slot.width || 300;
+				config.slot.height = config.slot.height || 250;
+				config.passback = config.passback || '';
+				config.publisher = config.publisher || document.location.href;
+				config.timeout = config.timeout || 500;
 
-			everythingLoaded(bidders, config, debug ? id : undefined);
-		};
-
-		if (typeof bidders === 'string')
-			sendQuery(bidders, undefined, afterBidders);
-		else
-			afterBidders(bidders);
+				everythingLoaded(bidders, config, debug ? id : undefined);
+			});
 	};
 
     var everythingLoaded = function (bidders, config, debug)
@@ -208,119 +288,114 @@
 
     var auctionSend = function (auction, bidderId, bidder)
 	{
-        sendQuery
-		(
-			bidder.bid_ep,
-			auction.request,
-			function (result)
+        sendQuery(bidder.bid_ep, auction.request).then(function (result)
+		{
+			var bids;
+			var bid;
+
+			if (auction.pending === 0)
+				return;
+
+			if (new Date().getTime() >= auction.timeout)
 			{
-                var bids;
-                var bid;
-
-				if (auction.pending === 0)
-					return;
-
-				if (new Date().getTime() >= auction.timeout)
+				sendDebug(auction,
 				{
-					sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'timeout'
-					});
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'timeout'
+				});
 
-                    return;
-				}
-				else if (result === undefined)
-				{
-					sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'corrupted'
-					});
-
-                    return;
-				}
-                else if (result.seatbid.length === 0)
-                {
-                    sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'nobid'
-					});
-
-                    return;
-                }
-                else if (result.seatbid[0].bid !== undefined)
-                {
-                    sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'corrupted'
-					});
-
-                    return;
-                }
-
-                bids = result.seatbid[0].bid;
-
-                if (bids.length === 0)
-                {
-                    sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'nobid'
-					});
-
-                    return;
-                }
-
-                bid = bids[0];
-
-                if (bid.price === undefined || bid.creative === undefined)
-                {
-                    sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_filter',
-						reason:		'nobid'
-					});
-
-                    return;
-                }
-				else
-				{
-					sendDebug(auction,
-					{
-						auction:	auction.id,
-						bidder:		bidderId,
-						event:		'bid_valid',
-						price:		bid.price
-					});
-
-					auction.results.push
-					({
-						creative:	bid.creative,
-						id:			bidderId,
-						notify:		bid.nurl,
-						price:		bid.price
-					});
-				}
-
-				if (--auction.pending === 0)
-					auctionEnd(auction);
+				return;
 			}
-		);
+			else if (result === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'corrupted'
+				});
+
+				return;
+			}
+			else if (result.seatbid.length === 0)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'nobid'
+				});
+
+				return;
+			}
+			else if (result.seatbid[0].bid !== undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'corrupted'
+				});
+
+				return;
+			}
+
+			bids = result.seatbid[0].bid;
+
+			if (bids.length === 0)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'nobid'
+				});
+
+				return;
+			}
+
+			bid = bids[0];
+
+			if (bid.price === undefined || bid.creative === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_filter',
+					reason:		'nobid'
+				});
+
+				return;
+			}
+			else
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidderId,
+					event:		'bid_valid',
+					price:		bid.price
+				});
+
+				auction.results.push
+				({
+					creative:	bid.creative,
+					id:			bidderId,
+					notify:		bid.nurl,
+					price:		bid.price
+				});
+			}
+
+			if (--auction.pending === 0)
+				auctionEnd(auction);
+		});
 	};
 
     var acceptBidder = function (bidder, auction)
@@ -368,9 +443,12 @@
 			window.parent.postMessage({data: data, id: auction._debug}, auction.config.publisher);
 	};
 
-	var sendQuery = function (url, data, complete)
+	var sendQuery = function (url, data)
 	{
+		var future;
 		var xhr;
+
+		future = new Future();
 
 		xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function ()
@@ -388,7 +466,7 @@
 					json = undefined;
 				}
 
-				complete(json);
+				future.signal(json);
 			}
 		};
 
@@ -402,6 +480,8 @@
 			xhr.open('GET', url, true);
 			xhr.send();
 		}
+
+		return future;
 	};
 
 	addEventListener('message', start, false);
