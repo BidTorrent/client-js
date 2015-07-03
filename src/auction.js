@@ -260,6 +260,21 @@
 				continue;
 			}
 
+			if (result.cur !== undefined && 
+				result.cur !== auction.request.cur)
+			{
+				sendDebug(
+					auction,
+					{
+						auction:	auction.id,
+						bidder:		bidders[i].id,
+						event:		'bid_filter',
+						reason:		"invalid currency"
+					});
+
+				continue;
+			}
+
 			seatbid = result.seatbid[0];
 
 			if (seatbid === undefined || seatbid.bid === undefined)
@@ -277,7 +292,9 @@
 
 			bid = seatbid.bid[0];
 
-			if (bid === undefined || bid.creative === undefined || bid.price === undefined || bid.price <= 0)
+			if (bid === undefined ||
+				bid.creative === undefined ||
+				bid.price === undefined || bid.price <= 0)
 			{
 				sendDebug(auction,
 				{
@@ -290,6 +307,31 @@
 				continue;
 			}
 
+			if (bid.adomain !== undefined && auction.request.badv !== undefined)
+			{
+				var domBlId = 0;
+
+				for (; domBlId < auction.request.badv.length; ++domBlId)
+				{
+					if (auction.request.badv[domBlId] === bid.adomain)
+					{
+						sendDebug(
+							auction,
+							{
+								auction:	auction.id,
+								bidder:		bidders[i].id,
+								event:		'bid_filter',
+								reason:		"invalid advertiser domain"
+							});
+
+						break;
+					}
+				}
+
+				if (domBlId !== auction.request.badv.length)
+					continue;
+			}
+			
 			currentPrice = bid.price;
 
 			sendDebug(auction,
@@ -373,7 +415,6 @@
 		return Future.first(sendQuery(bidder.bid_ep, auction.request), timeout);
 	};
 
-	// TODO: test country bl & language
 	var acceptBidder = function (bidder, auction)
 	{
 		var filters = bidder.filters;
