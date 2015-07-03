@@ -376,12 +376,12 @@
 	// TODO: test country bl & language
 	var acceptBidder = function (bidder, auction)
 	{
-		var filters;
-		
-		if ((filters = bidder.filters) === undefined)
+		var filters = bidder.filters;
+
+		if (filters === undefined)
 			return true;
 
-		if (filters.sampling !== undefined && Math.random() > filters.sampling)
+		if (filters.sampling !== undefined && Math.random() * 100 > filters.sampling)
 			return false;
 
 		// if publisher country is not part of whitelist countries => bidder banished
@@ -391,24 +391,24 @@
 			auction.config.site.publisher.country !== undefined)
 		{
 			// if whitelist mode
-			if(filters.pub_ctry_wl !== undefined && filters.pub_ctry_wl === true)
+			if (filters.pub_ctry_wl !== undefined && filters.pub_ctry_wl === true)
 			{
 				var ctryId = 0;
 				
-				for(; ctryId < filters.pub_ctry.length; ++ctryId)
+				for (; ctryId < filters.pub_ctry.length; ++ctryId)
 				{
-					if(filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
+					if (filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
 						break;
 				}
 
-				if(ctryId === filters.pub_ctry.length)
+				if (ctryId === filters.pub_ctry.length)
 					return false;
 			}
 			else
 			{
-				for(var ctryId = 0; ctryId < filters.pub_ctry.length; ++ctryId)
+				for (var ctryId = 0; ctryId < filters.pub_ctry.length; ++ctryId)
 				{
-					if(filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
+					if (filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
 						return false;
 				}
 			}
@@ -417,27 +417,27 @@
 		// if user language is not part of whitelist language => bidder banished
 		// if user language is part of blacklist language => bidder banished
 		if (filters.user_lang !== undefined &&
-			filters.user_lang.length !== 0 )
+			filters.user_lang.length !== 0)
 		{
 			// if whitelist mode
-			if(filters.user_lang_wl !== undefined && filters.user_lang_wl === true)
+			if (filters.user_lang_wl !== undefined && filters.user_lang_wl === true)
 			{
 				var userLangId = 0;
 
-				for(; userLangId < filters.user_lang.length; ++userLangId)
+				for (; userLangId < filters.user_lang.length; ++userLangId)
 				{
-					if(filters.user_lang[userLangId] === auction.request.device.language)
+					if (filters.user_lang[userLangId] === auction.request.device.language)
 						break;
 				}
 
-				if(userLangId === filters.user_lang.length)
+				if (userLangId === filters.user_lang.length)
 					return false;
 			}
 			else
 			{
-				for(var userLangId = 0; userLangId < filters.user_lang.length; ++userLangId)
+				for (var userLangId = 0; userLangId < filters.user_lang.length; ++userLangId)
 				{
-					if(filters.user_lang[userLangId] === auction.request.device.language)
+					if (filters.user_lang[userLangId] === auction.request.device.language)
 						return false;
 				}
 			}
@@ -461,11 +461,11 @@
 		// if the publisher domain is blacklisted per bidder => bidder banished
 		if (filtes.pub !== undefined)
 		{
-			for(var pubId = 0; pubId < filters.pub.length; ++pubId)
+			for (var pubId = 0; pubId < filters.pub.length; ++pubId)
 			{
 				var pubBl = filters.pub[pubId];
 
-				if(auction.config.site.domain === pubBl)
+				if (auction.config.site.domain === pubBl)
 					return false;
 			}
 		}
