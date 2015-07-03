@@ -31,7 +31,6 @@ bidTorrent = (function ()
 			init = init || {};
 			init.auction = init.auction || 'http://bidtorrent.io/auction.html';
 			init.bidders = init.bidders || 'http://bidtorrent.io/bidders.json';
-			init.passback = init.passback || {};
 			init.slots = init.slots || [];
 
 			if (init.config === undefined)
@@ -56,6 +55,7 @@ bidTorrent = (function ()
 					continue;
 				}
 
+				slot.floor = slot.floor || 0;
 				slot.height = slot.height || slot.element.offsetHeight;
 				slot.width = slot.width || slot.element.offsetWidth;
 
@@ -70,7 +70,6 @@ bidTorrent = (function ()
 							config:		init.config,
 							debug:		init.debug,
 							index:		index,
-							passback:   init.passback,
 							slot:		{
 								floor:	slot.floor,
 								height:	slot.height,

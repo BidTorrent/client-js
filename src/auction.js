@@ -113,7 +113,6 @@
 		var debug = event.data.debug;
 		var index = event.data.index;
 		var slot = event.data.slot;
-		var passback = event.data.passback;
 
 		Future
 			.bind
@@ -128,29 +127,24 @@
 
 				applyDefaultValue(config);
 
-				everythingLoaded(
-					bidders,
-					config,
-					slot,
-					passback,
-					debug ? index : undefined);
+				everythingLoaded(bidders, config, slot, debug ? index : undefined);
 			});
 	};
 
-	var applyDefaultValue = function (config)
+	var applyDefaultValue = function(config)
 	{
 		config = config || {};
-
+		config.cur = config.cur || "EUR";
+		config.passback = config.passback || '';
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || "bidtorrent.com";
 		config.site.publisher = config.site.publisher || {};
 		config.site.publisher.id = config.site.publisher.id || 123;
 		config.site.publisher.country = config.site.publisher.country || "FR";
-
 		config.tmax = config.tmax || 500;
 	}
 
-	var everythingLoaded = function (bidders, config, slot, passback, debug)
+	var everythingLoaded = function (bidders, config, slot, debug)
 	{
 		var makeGuid = function ()
 		{
@@ -174,7 +168,6 @@
 			request:	formatBidRequest(id, config, slot),
 			bidders:	bidders,
 			config:		config,
-			passback:	passback,
 			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
 			_debug:		debug
@@ -195,23 +188,14 @@
 
 	var formatBidRequest = function (id, config, slot)
 	{
-		var appliedFloor;
 		var auctionRequest;
 		var impression;
-
-		if (slot.floor !== undefined)
-			appliedFloor = slot.floor;
-		else 
-		if (config.imp !== undefined && config.imp.length > 0 && config.imp[0].bidfloor !== undefined)
-			appliedFloor = config.imp[0].bidfloor;
-		else
-			appliedFloor = 0.0;
 
 		auctionRequest =
 		{
 			badv: config.badv,
 			bcat: config.bcat,
-			cur: 'USD',
+			cur: config.cur,
 			device: {
 				js: 1,
 				language: navigator.language,
@@ -223,7 +207,7 @@
 					w:	slot.width,
 					h:	slot.height
 				},
-				bidfloor: appliedFloor
+				bidfloor: slot.floor
 			}],
 			site: config.site,
 			tmax: config.tmax,
@@ -408,7 +392,7 @@
 
 		if (winner === undefined)
 		{
-			document.body.innerHTML = auction.passback;
+			document.body.innerHTML = auction.config.passback;
 
 			return;
 		}
