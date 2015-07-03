@@ -24,15 +24,15 @@
 }
 
 .bidtorrent-debug .bidder.error {
-    color:				#a94442;
-    background-color:	#f2dede;
-    border-color:		#ebccd1;
+    color:				#A94442;
+    background-color:	#F2DEDE;
+    border-color:		#EBCCD1;
 }
 
 .bidtorrent-debug .bidder.filter {
-    color:				#000000;
-    background-color:	#FFFFFF;
-    border-color:		#666666;
+	color:				#A9A942;
+	background-color:	#F2F2DE;
+	border-color:		#EBEBD1;
 }
 
 .bidtorrent-debug .bidder.valid {
