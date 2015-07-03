@@ -9,11 +9,11 @@
 		"bid_ep": "http://bidder.bidtorrent.io/testBid.php",
         "filters" : {
             "sampling": 1.00,
-            "ctry_bl": ["FR", "US"],
-            "lang_bl": ["EU-us"],
-            "lang_wl": ["FR-fr"],
-            "cat_bl": ["IAB1-4"],
-            "cat_wl": ["IAB1-3", "IAB1-6"],
+            "pub_ctry": ["FR", "US"],
+            "pub_ctry_wl": true,
+            "user_lang": ["EU-us"],
+            "user_lang_wl": true,
+            "cat": ["IAB1-4"],
             "pub": ["pr0n.com"]
         },
 		"name": "Test #2"
