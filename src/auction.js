@@ -493,7 +493,71 @@
 
 			document.body.appendChild(pixel);
 		}
-	}
+
+		evalBodyJS(document.body);
+	};
+
+	var evalBodyJS = function (body)
+	{
+		var apply;
+		var node;
+		var nodes;
+		var trick;
+
+		apply = function (node)
+		{
+			var child;
+			var nodes = [];
+
+			for (var i = 0; i < node.childNodes.length; ++i)
+			{
+				child = node.childNodes[i];
+
+				if (child.nodeName.toUpperCase() === 'SCRIPT' && (!child.type || child.type.toLowerCase() === 'text/javascript'))
+					nodes.push(child);
+				else
+					nodes = nodes.concat(apply(child));
+			}
+
+			return nodes;
+		};
+
+		function trick(elem)
+		{
+			var script = document.createElement('script');
+			var source = elem.text || elem.textContent || elem.innerHTML || '';
+			var target = document.getElementsByTagName('head')[0] || document.documentElement;
+
+			script.src = elem.src;
+			script.type = 'text/javascript';
+
+			try
+			{
+				// Standard way to set script source code
+				script.appendChild(document.createTextNode(source));
+			}
+			catch (e)
+			{
+				// Workaround for IE <= 7
+				script.text = source;
+			}
+
+			target.insertBefore(script, target.firstChild);
+			target.removeChild(script);
+		};
+
+		nodes = apply(body);
+
+		for (i = 0; i < nodes.length; i++)
+		{
+			node = nodes[i];
+
+			if (node.parentNode)
+				node.parentNode.removeChild(node);
+
+			trick(node);
+		}
+	};
 
 	var sendDebug = function (auction, data)
 	{

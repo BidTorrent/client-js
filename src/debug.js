@@ -139,7 +139,7 @@
 	++defer_wait;
 	var debugCss = document.createElement('link');
 	debugCss.onload = defer_signal;
-	debugCss.href = 'http://static.bidtorrent.io/debug.css';
+	debugCss.href = 'http://bidtorrent.io/debug.css';
 	debugCss.rel = 'stylesheet';
 	debugCss.type = 'text/css';
 	document.body.appendChild(debugCss);
