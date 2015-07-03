@@ -317,6 +317,32 @@
 				continue;
 			}
 
+			if (bid.signature === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_error',
+					reason:		'missing signature'
+				});
+
+				continue;
+			}
+
+			if (bid.impid !== undefined && bid.impid !== auction.request.imp[0].id)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_filter',
+					reason:		'invalid imp id'
+				});
+
+				continue;
+			}
+
 			if (bid.adomain !== undefined && auction.request.badv !== undefined)
 			{
 				var domBlId = 0;
@@ -341,7 +367,7 @@
 				if (domBlId !== auction.request.badv.length)
 					continue;
 			}
-			
+
 			currentPrice = bid.price;
 
 			sendDebug(auction,
@@ -542,6 +568,7 @@
 			pixel = document.createElement('img');
 			pixel.height = '1px';
 			pixel.width = '1px';
+
 			pixel.src = notifyUrl.replace('${AUCTION_PRICE}', secondPrice);
 
 			document.body.appendChild(pixel);
