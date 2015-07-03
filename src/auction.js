@@ -112,7 +112,7 @@
 		var config = event.data.config;
 		var debug = event.data.debug;
 		var index = event.data.index;
-		var slot = event.data.slot;
+		var slots = event.data.slots;
 
 		Future
 			.bind
@@ -127,17 +127,17 @@
 
 				applyDefaultValue(config);
 
-				everythingLoaded(bidders, config, slot, debug ? index : undefined);
+				everythingLoaded(bidders, config, slots[0], debug ? index : undefined);
 			});
 	};
 
 	var applyDefaultValue = function(config)
 	{
 		config = config || {};
-		config.cur = config.cur || "EUR";
+		config.cur = [config.cur || 'EUR'];
 		config.passback = config.passback || '';
 		config.site = config.site || {};
-		config.site.domain = config.site.domain || "bidtorrent.com";
+		config.site.domain = config.site.domain || 'bidtorrent.com';
 		config.site.publisher = config.site.publisher || {};
 		config.site.publisher.id = config.site.publisher.id || 123;
 		config.site.publisher.country = config.site.publisher.country || "FR";
@@ -204,10 +204,13 @@
 			id: id,
 			imp: [{
 				banner: {
-					w:	slot.width,
-					h:	slot.height
+//					btype: [],
+					w: slot.width,
+					h: slot.height
 				},
-				bidfloor: slot.floor
+				bidfloor: slot.floor,
+				id: 1,
+//				secure: FIXME
 			}],
 			site: config.site,
 			tmax: config.tmax,
@@ -259,7 +262,7 @@
 				continue;
 			}
 
-			if (!result || result.seatbid === undefined)
+			if (!result || !result.seatbid)
 			{
 				sendDebug(auction,
 				{
@@ -272,31 +275,29 @@
 				continue;
 			}
 
-			if (result.cur !== undefined && 
-				result.cur !== auction.request.cur)
+			if (result.cur && result.cur != auction.request.cur[0])
 			{
-				sendDebug(
-					auction,
-					{
-						auction:	auction.id,
-						bidder:		bidders[i].id,
-						event:		'bid_filter',
-						reason:		"invalid currency"
-					});
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_error',
+					reason:		'invalid currency'
+				});
 
 				continue;
 			}
 
 			seatbid = result.seatbid[0];
 
-			if (!seatbid || seatbid.bid === undefined)
+			if (!seatbid || !seatbid.bid)
 			{
 				sendDebug(auction,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
-					event:		'bid_filter',
-					reason:		'nobid'
+					event:		'bid_error',
+					reason:		'no bid'
 				});
 
 				continue;
@@ -304,20 +305,20 @@
 
 			bid = seatbid.bid[0];
 
-			if (!bid || bid.creative === undefined || bid.price === undefined || bid.price <= 0)
+			if (!bid || !bid.creative || !bid.price)
 			{
 				sendDebug(auction,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
-					reason:		'corrupted'
+					reason:		'no price'
 				});
 
 				continue;
 			}
 
-			if (bid.signature === undefined)
+			if (!bid.signature)
 			{
 				sendDebug(auction,
 				{
@@ -330,20 +331,20 @@
 				continue;
 			}
 
-			if (bid.impid !== undefined && bid.impid !== auction.request.imp[0].id)
+			if (bid.id && bid.id != auction.request.imp[0].id)
 			{
 				sendDebug(auction,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
-					event:		'bid_filter',
+					event:		'bid_error',
 					reason:		'invalid imp id'
 				});
 
 				continue;
 			}
 
-			if (bid.adomain !== undefined && auction.request.badv !== undefined)
+			if (bid.adomain && auction.request.badv)
 			{
 				var domBlId = 0;
 
@@ -351,14 +352,13 @@
 				{
 					if (auction.request.badv[domBlId] === bid.adomain)
 					{
-						sendDebug(
-							auction,
-							{
-								auction:	auction.id,
-								bidder:		bidders[i].id,
-								event:		'bid_filter',
-								reason:		"invalid advertiser domain"
-							});
+						sendDebug(auction,
+						{
+							auction:	auction.id,
+							bidder:		bidders[i].id,
+							event:		'bid_error',
+							reason:		'invalid advertiser domain'
+						});
 
 						break;
 					}

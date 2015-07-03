@@ -70,11 +70,11 @@ bidTorrent = (function ()
 							config:		init.config,
 							debug:		init.debug,
 							index:		index,
-							slot:		{
+							slots:		[{
 								floor:	slot.floor,
 								height:	slot.height,
 								width:	slot.width
-							}
+							}]
 						}, '*');
 					};
 				})(i, slot);
