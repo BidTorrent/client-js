@@ -4,14 +4,12 @@
 }
 
 .bidtorrent-debug .bidder {
-    color: #AAA;
-
 	padding:			4px 8px;
 	margin:				8px 0;
 	background-color:	#DDD;
-
-    border: 1px solid transparent;
-    border-radius: 4px;
+    border:				1px solid transparent;
+    border-radius:		4px;
+    color:				#AAA;
 }
 
 .bidtorrent-debug .bidder .name {
@@ -25,20 +23,26 @@
 	text-align:	right;
 }
 
+.bidtorrent-debug .bidder.error {
+    color:				#a94442;
+    background-color:	#f2dede;
+    border-color:		#ebccd1;
+}
+
 .bidtorrent-debug .bidder.filter {
-    color: #a94442;
-    background-color: #f2dede;
-    border-color: #ebccd1;
+    color:				#000000;
+    background-color:	#FFFFFF;
+    border-color:		#666666;
 }
 
 .bidtorrent-debug .bidder.valid {
-    color: #31708f;
-    background-color: #d9edf7;
-    border-color: #bce8f1;
+    color:				#31708f;
+    background-color:	#d9edf7;
+    border-color:		#bce8f1;
 }
 
 .bidtorrent-debug .bidder.winner {
-    color: #3c763d;
-    background-color: #dff0d8;
-    border-color: #d6e9c6;
+    color:				#3c763d;
+    background-color:	#dff0d8;
+    border-color:		#d6e9c6;
 }

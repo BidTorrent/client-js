@@ -240,20 +240,32 @@
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
-					event:		'bid_filter',
+					event:		'bid_error',
 					reason:		'timeout'
 				});
 
 				continue;
 			}
 
-			if (result === undefined || result.seatbid === undefined)
+			if (result === null)
 			{
 				sendDebug(auction,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
-					event:		'bid_filter',
+					event:		'bid_filter'
+				});
+
+				continue;
+			}
+
+			if (!result || result.seatbid === undefined)
+			{
+				sendDebug(auction,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_error',
 					reason:		'empty'
 				});
 
@@ -277,7 +289,7 @@
 
 			seatbid = result.seatbid[0];
 
-			if (seatbid === undefined || seatbid.bid === undefined)
+			if (!seatbid || seatbid.bid === undefined)
 			{
 				sendDebug(auction,
 				{
@@ -292,15 +304,13 @@
 
 			bid = seatbid.bid[0];
 
-			if (bid === undefined ||
-				bid.creative === undefined ||
-				bid.price === undefined || bid.price <= 0)
+			if (!bid || bid.creative === undefined || bid.price === undefined || bid.price <= 0)
 			{
 				sendDebug(auction,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
-					event:		'bid_filter',
+					event:		'bid_error',
 					reason:		'corrupted'
 				});
 
@@ -389,6 +399,8 @@
 
 			if (acceptBidder(bidder, auction))
 				futures.push(auctionSend(auction, bidder));
+			else
+				futures.push(Future.make(null));
 		}
 
 		return Future.bind.apply(null, futures);

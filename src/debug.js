@@ -173,13 +173,26 @@
 
 					break;
 
+				case 'bid_error':
+					bidder = container.find('.id-' + data.bidder);
+
+					animate_push (function (complete)
+					{
+						bidder.addClass('error');
+						bidder.find('.info').text('Error: ' + data.reason);
+
+						complete();
+					});
+
+					break;
+
 				case 'bid_filter':
 					bidder = container.find('.id-' + data.bidder);
 
 					animate_push (function (complete)
 					{
 						bidder.addClass('filter');
-						bidder.find('.info').text('Filtered: ' + data.reason);
+						bidder.find('.info').text('Filtered');
 
 						complete();
 					});
