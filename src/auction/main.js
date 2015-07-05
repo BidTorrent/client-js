@@ -2,109 +2,11 @@
 ** BidTorrent auction component.
 ** copyright the BidTorrent team 2015
 */
+
 (function ()
 {
-	var Future = function ()
-	{
-		this.arguments = undefined;
-		this.complete = undefined;
-	};
-
-	Future.bind = function ()
-	{
-		var complete;
-		var future;
-		var results;
-		var wait;
-
-		future = new Future();
-
-		if (arguments.length <= 0)
-			future.signal();
-		else
-		{
-			complete = function (index)
-			{
-				return function ()
-				{
-					results[index] = arguments;
-
-					if (--wait <= 0)
-						future.signal.apply(future, results);
-				};
-			};
-
-			results = new Array(arguments.length);
-			wait = arguments.length;
-
-			for (var i = 0; i < arguments.length; ++i)
-				arguments[i].then(complete(i));
-		}
-
-		return future;
-	};
-
-	Future.first = function ()
-	{
-		var complete;
-		var future;
-		var wait;
-
-		complete = function (futures)
-		{
-			return function ()
-			{
-				if (wait)
-				{
-					wait = false;
-
-					for (var i = 0; i < futures.length; ++i)
-						futures[i].signal();
-
-					future.signal.apply(future, arguments);
-				}
-			};
-		};
-
-		future = new Future();
-		wait = true;
-
-		for (var i = 0; i < arguments.length; ++i)
-			arguments[i].then(complete(arguments));
-
-		return future;
-	};
-
-	Future.make = function ()
-	{
-		var future;
-
-		future = new Future();
-		future.signal.apply(future, arguments);
-
-		return future;
-	};
-
-	Future.prototype.signal = function ()
-	{
-		if (this.arguments !== undefined)
-			return false;
-
-		this.arguments = arguments;
-
-		if (this.complete !== undefined)
-			this.complete.apply(null, arguments);
-
-		return true;
-	};
-
-	Future.prototype.then = function (complete)
-	{
-		if (this.arguments !== undefined)
-			complete.apply(null, this.arguments);
-		else
-			this.complete = complete;
-	};
+	var Future = require('./concurrent').Future;
+	var Query = require('./http').Query;
 
 	var start = function (event)
 	{
@@ -117,8 +19,8 @@
 		Future
 			.bind
 			(
-				typeof bidders === 'string' ? sendQuery(bidders) : Future.make(bidders),
-				typeof config === 'string' ? sendQuery(config) : Future.make(config)
+				typeof bidders === 'string' ? Query.json(bidders) : Future.make(bidders),
+				typeof config === 'string' ? Query.json(config) : Future.make(config)
 			)
 			.then(function(biddersArgs, configArgs)
 			{
@@ -450,7 +352,7 @@
 			}
 		}, auction.config.tmax);
 
-		return Future.first(sendQuery(bidder.bid_ep, auction.request), timeout);
+		return Future.first(Query.json(bidder.bid_ep, auction.request), timeout);
 	};
 
 	var acceptBidder = function (bidder, auction)
@@ -643,52 +545,6 @@
 	{
 		if (auction._debug !== undefined)
 			window.parent.postMessage({data: data, id: auction._debug}, document.location.href);
-	};
-
-	var sendQuery = function (url, data)
-	{
-		var future;
-		var xhr;
-
-		future = new Future();
-
-		xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function ()
-		{
-			var json;
-
-			if (xhr.readyState !== 4)
-				return;
-
-			if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
-			{
-				try
-				{
-					json = JSON.parse(xhr.responseText);
-				}
-				catch (e)
-				{
-					json = undefined;
-				}
-			}
-			else
-				json = undefined;
-
-			future.signal(json);
-		};
-
-		if (data !== undefined)
-		{
-			xhr.open('POST', url, true);
-			xhr.send(JSON.stringify(data));
-		}
-		else
-		{
-			xhr.open('GET', url, true);
-			xhr.send();
-		}
-
-		return future;
 	};
 
 	addEventListener('message', start, false);

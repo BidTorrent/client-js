@@ -1,0 +1,52 @@
+
+@error:		#ECC;
+@filter:	#EEB;
+@valid:		#CEF;
+@winner:	#CED;
+
+.bidder(@color) {
+	color:				darken(@color, 50%);
+	background-color:	@color;
+	border-color:		darken(@color, 10%) darken(@color, 20%) darken(@color, 20%) darken(@color, 10%);
+}
+
+.bidtorrent-debug {
+	font:	normal normal normal 12px Arial;
+
+	.bidder {
+		padding:			4px 8px;
+		margin:				8px 0;
+		background-color:	#DDD;
+		border-radius:		4px;
+		border-style:		solid;
+		border-width:		2px;
+		color:				#AAA;
+
+		.info {
+			display:	block;
+			font-style:	italic;
+			text-align:	right;
+		}
+
+		.name {
+			display:		block;
+			font-weight:	bold;
+		}
+
+		&.error {
+			.bidder(@error);
+		}
+
+		&.filter {
+			.bidder(@filter);
+		}
+
+		&.valid {
+			.bidder(@valid);
+		}
+
+		&.winner {
+			.bidder(@winner);
+		}
+	}
+}

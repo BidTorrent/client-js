@@ -1,7 +1,7 @@
 
-(function ()
+(function (parent)
 {
-	if (window.bidTorrent === undefined)
+	if (parent.bidTorrent === undefined)
 		return;
 
 	var swap_bidders = function (container, at, complete)
@@ -145,7 +145,7 @@
 	document.body.appendChild(debugCss);
 
 	// FIXME
-	window.bidTorrent.connect(function (element, data)
+	parent.bidTorrent.connect(function (element, data)
 	{
 		defer(function ()
 		{
@@ -260,4 +260,4 @@
 			}
 		});
 	});
-})();
+})(window);
