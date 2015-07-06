@@ -7,6 +7,7 @@ bidTorrent = (function ()
 {
 	var client;
 	var probes;
+	var url;
 
 	// BidTorrent JavaScript client
 	client = function (init)
@@ -29,15 +30,17 @@ bidTorrent = (function ()
 
 			// Populate initialization object with missing default value
 			init = init || {};
-			init.auction = init.auction || 'http://bidtorrent.io/auction.html';
-			init.bidders = init.bidders || 'http://bidtorrent.io/bidders.json';
-			init.slots = init.slots || [];
 
 			if (init.config === undefined)
 			{
 				console.error('[bidtorrent] no configuration object/URL specified');
 				return;
 			}
+
+			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
+			init.bidders = url(init.bidders || 'http://bidtorrent.io/bidders.json');
+			init.config = url(init.config);
+			init.slots = init.slots || [];
 
 			// Start auctions on each configured slot
 			for (var i = 0; i < init.slots.length; ++i)
@@ -120,6 +123,16 @@ bidTorrent = (function ()
 			loader();
 		else
 			document.addEventListener('DOMContentLoaded', loader, false);
+	};
+
+	// Parse relative into absolute URL
+	url = function (relative)
+	{
+		var parse = document.createElement('a');
+
+		parse.href = relative;
+
+		return parse.href;
 	};
 
 	// BidTorrent JavaScript debug handler
