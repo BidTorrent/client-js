@@ -159,13 +159,14 @@
 			id: id,
 			imp: [{
 				banner: {
-//					btype: [],
+					btype: config.imp[0].banner === undefined ? undefined : config.imp[0].banner.btype,
 					w: slot.width,
 					h: slot.height
 				},
 				bidfloor: slot.floor,
 				id: 1,
-//				secure: FIXME
+				instl: config.imp[0].instl
+				secure: config.imp[0].secure
 			}],
 			site: config.site,
 			tmax: config.tmax,
