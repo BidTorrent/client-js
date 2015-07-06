@@ -478,6 +478,9 @@
 		}
 
 		evalBodyJS(document.body);
+
+		renderImpressionPixel(creativeImg, results)
+
 	};
 
 	var evalBodyJS = function (body)
@@ -541,6 +544,15 @@
 			trick(node);
 		}
 	};
+
+	var renderImpressionPixel = function(domContainer, bids);
+	{
+		var pixel = document.createElement('img');
+
+		//todo(manitra)
+
+		domContainer.appendChild(pixel);
+	}
 
 	var sendDebug = function (auction, data)
 	{
