@@ -25,8 +25,8 @@
 			)
 			.then(function(biddersArgs, configArgs)
 			{
-				var bidders = biddersArgs[0];
-				var config = configArgs[0];
+				var bidders = biddersArgs[0] || [];
+				var config = configArgs[0] || {};
 				var debugId;
 
 				debugId = debug ? index : undefined;
@@ -42,7 +42,6 @@
 
 	var applyDefaultValue = function(config)
 	{
-		config = config || {};
 		config.cur = config.cur || ['USD'];
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';

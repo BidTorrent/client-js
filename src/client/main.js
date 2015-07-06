@@ -38,7 +38,7 @@ bidTorrent = (function ()
 			}
 
 			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
-			init.bidders = url(init.bidders || 'http://bidtorrent.io/bidders.json');
+			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
 			init.config = url(init.config);
 			init.slots = init.slots || [];
 			init.statUrl = url(init.statUrl || 'http://stat.bidtorrent.io/imp');
