@@ -15,6 +15,7 @@
 		var debug = event.data.debug;
 		var index = event.data.index;
 		var slots = event.data.slots;
+		var statUrl = event.data.statUrl;
 
 		Future
 			.bind
@@ -35,7 +36,7 @@
 				if (!isConfigOK(config, debugId))
 					return;				
 
-				everythingLoaded(bidders, config, slots[0], debugId);
+				everythingLoaded(bidders, config, slots[0], debugId, statUrl);
 			});
 	};
 
@@ -99,7 +100,7 @@
 		return true;
 	}
 
-	var everythingLoaded = function (bidders, config, slot, debug)
+	var everythingLoaded = function (bidders, config, slot, debug, statUrl)
 	{
 		var makeGuid = function ()
 		{
@@ -137,7 +138,12 @@
 
 		auctionBegin(auction).then(function ()
 		{
-			auctionEnd(auction, bidders, arguments);
+			var results = [];
+			for (var i = 0; i < arguments.length; i++) 
+			{
+				results.push(arguments[i][0]);
+			}
+			auctionEnd(auction, bidders, results, config, statUrl);
 		});
 	}
 
@@ -176,7 +182,7 @@
 		return auctionRequest;
 	};
 
-	var auctionEnd = function (auction, bidders, results)
+	var auctionEnd = function (auction, bidders, results, config, statUrl)
 	{
 		var bid;
 		var currentPrice;
@@ -185,13 +191,14 @@
 		var secondPrice;
 		var timeout;
 		var winner;
+		var domContainer;
 
 		secondPrice = auction.config.floor;
 		timeout = new Date().getTime() >= auction.timeout;
 
 		for (var i = 0; i < results.length; ++i)
 		{
-			var result = results[i][0];
+			var result = results[i];
 
 			if (timeout)
 			{
@@ -363,12 +370,20 @@
 			price:		secondPrice
 		});
 
-		makeSucceededHtml
+		domContainer = makeSucceededHtml
 		(
 			winner.creative,
 			winner.nurl,
-			secondPrice,
-			results
+			secondPrice
+		);
+
+		renderImpressionPixel(
+			config,
+			auction,
+			bidders,
+			results,
+			domContainer,
+			statUrl
 		);
 	};
 
@@ -518,7 +533,7 @@
 		return true;
 	}
 
-	var makeSucceededHtml = function (creativeCode, notifyUrl, secondPrice, results)
+	var makeSucceededHtml = function (creativeCode, notifyUrl, secondPrice)
 	{
 		var creativeImg;
 		var pixel;
@@ -530,19 +545,14 @@
 
 		if (notifyUrl)
 		{
-			pixel = document.createElement('img');
-			pixel.height = '1px';
-			pixel.width = '1px';
-
-			pixel.src = notifyUrl.replace('${AUCTION_PRICE}', secondPrice);
-
-			document.body.appendChild(pixel);
+			addPixel(
+				notifyUrl.replace('${AUCTION_PRICE}', secondPrice),
+				document.body
+			);
 		}
 
 		evalBodyJS(document.body);
-
-		renderImpressionPixel(creativeImg, results)
-
+		return creativeImg;
 	};
 
 	var evalBodyJS = function (body)
@@ -607,13 +617,46 @@
 		}
 	};
 
-	var renderImpressionPixel = function(domContainer, bids)
+	/*
+	* Renders an impression pixel in the bottom of the ad
+	*/
+	var renderImpressionPixel = function(config, auction, bidders, results, domContainer, statUrl)
 	{
-		var pixel = document.createElement('img');
+		var response;
+		var bids;
+		var bid;
+		var bidder;
 
-		//todo(manitra)
+		var parts = {
+			'a': auction.id,
+			'p': config.site.publisher.id,
+			'f': auction.config.imp[0].bidfloor
+		};
 
-		domContainer.appendChild(pixel);
+		for(var resultIndex = 0; resultIndex < results.length; resultIndex++)
+		{
+			response = results[resultIndex];
+			if (response == null) continue;
+			bidder = bidders[resultIndex];
+
+			bids = response.seatbid;
+			for(var bidIndex = 0; bidIndex < bids.length; bidIndex ++)
+			{
+				var bid = bids[bidIndex].bid[0];
+				parts['d[' + bidders[resultIndex].id + ']'] =
+					bid.price
+					+ '-'
+					+ bid.signature;
+			}
+		}
+
+		var url = statUrl;
+		var firstParam = true;
+		for(var key in parts) {
+			url = url + (firstParam ? '?' : '&') + key + '=' + parts[key];
+			firstParam = false;
+		}
+		addPixel(url, domContainer);
 	}
 
 	var sendDebug = function (debug, data)
@@ -621,6 +664,14 @@
 		if (debug !== undefined)
 			window.parent.postMessage({data: data, id: debug}, document.location.href);
 	};
+
+	var addPixel = function (url, parent) {
+		var pixel = document.createElement('img');
+		pixel.height = '1px';
+		pixel.width = '1px';
+		pixel.src = url;
+		parent.appendChild(pixel);
+	}
 
 	addEventListener('message', start, false);
 })();

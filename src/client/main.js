@@ -41,6 +41,7 @@ bidTorrent = (function ()
 			init.bidders = url(init.bidders || 'http://bidtorrent.io/bidders.json');
 			init.config = url(init.config);
 			init.slots = init.slots || [];
+			init.statUrl = url(init.statUrl || 'http://stat.bidtorrent.io/imp');
 
 			// Start auctions on each configured slot
 			for (var i = 0; i < init.slots.length; ++i)
@@ -77,7 +78,8 @@ bidTorrent = (function ()
 								floor:	slot.floor,
 								height:	slot.height,
 								width:	slot.width
-							}]
+							}],
+							statUrl: 	init.statUrl
 						}, '*');
 					};
 				})(i, slot);
