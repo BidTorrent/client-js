@@ -165,7 +165,7 @@
 				},
 				bidfloor: slot.floor,
 				id: 1,
-				instl: config.imp[0].instl
+				instl: config.imp[0].instl,
 				secure: config.imp[0].secure
 			}],
 			site: config.site,
@@ -287,7 +287,7 @@
 				continue;
 			}
 
-			if (bid.id && bid.id != auction.request.imp[0].id)
+			if (bid.impid && bid.impid != auction.request.imp[0].id)
 			{
 				sendDebug(auction._debug,
 				{
