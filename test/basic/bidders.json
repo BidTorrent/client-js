@@ -1,12 +1,12 @@
 [
 	{
 		"id": 1,
-		"bid_ep": "http://bidder.bidtorrent.io/criteoBid.php",
+		"bid_ep": "http://test.bidtorrent.io/criteoBid.php",
 		"name": "Criteo"
 	},
 	{
 		"id": 2,
-		"bid_ep": "http://bidder.bidtorrent.io/testBid.php",
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
         "filters" : {
             "sampling": 1.00,
             "pub_ctry": ["FR", "US"],
@@ -20,12 +20,12 @@
 	},
 	{
 		"id": 3,
-		"bid_ep": "http://bidder.bidtorrent.io/testBid.php",
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
 		"name": "Test #3"
 	},
 	{
 		"id": 4,
-		"bid_ep": "http://bidder.bidtorrent.io/testBid.php",
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
 		"name": "Test #4"
 	}
 ]
