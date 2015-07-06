@@ -156,7 +156,17 @@
 
 			switch (data.event)
 			{
-				case 'begin':
+				case 'init_error':
+					$('#' + data.container).css('visibility', 'hidden');
+
+					$('<div>')
+							.addClass('error')
+							.text('Configuration error: ' + data.reason)
+							.appendTo(container);
+
+					break;
+
+				case 'init_valid':
 					$('#' + data.container).css('visibility', 'hidden');
 
 					for (var i = 0; i < data.bidders.length; ++i)

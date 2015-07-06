@@ -26,24 +26,77 @@
 			{
 				var bidders = biddersArgs[0];
 				var config = configArgs[0];
+				var debugId;
+
+				debugId = debug ? index : undefined;
 
 				applyDefaultValue(config);
 
-				everythingLoaded(bidders, config, slots[0], debug ? index : undefined);
+				if (!isConfigOK(config, debugId))
+					return;				
+
+				everythingLoaded(bidders, config, slots[0], debugId);
 			});
 	};
 
 	var applyDefaultValue = function(config)
 	{
 		config = config || {};
-		config.cur = [config.cur || 'EUR'];
-		config.passback = config.passback || '';
+		config.cur = config.cur || ['USD'];
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
-		config.site.publisher = config.site.publisher || {};
-		config.site.publisher.id = config.site.publisher.id || 123;
-		config.site.publisher.country = config.site.publisher.country || "FR";
+		config.imp = config.imp || [{}];
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.0;
 		config.tmax = config.tmax || 500;
+	}
+
+	var isConfigOK = function(config, debug)
+	{
+		if (!config.site || !config.site.publisher || config.site.publisher.id === undefined)
+		{
+			sendDebug(debug,
+			{
+				event:		'init_error',
+				reason:		'missing publisher id'
+			});
+
+			return false;
+		}
+
+		if (!config.cur || config.cur.length === 0)
+		{
+			sendDebug(debug,
+			{
+				event:		'init_error',
+				reason:		'missing currency'
+			});
+
+			return false;
+		}
+
+		if (!config.imp || config.imp.length === 0 || config.imp[0].bidfloor === undefined)
+		{
+			sendDebug(debug,
+			{
+				event:		'init_error',
+				reason:		'missing impression bidfloor'
+			});
+
+			return false;
+		}
+
+		if (config.tmax === undefined)
+		{
+			sendDebug(debug,
+			{
+				event:		'init_error',
+				reason:		'missing timeout (tmax)'
+			});
+
+			return false;
+		}
+
+		return true;
 	}
 
 	var everythingLoaded = function (bidders, config, slot, debug)
@@ -75,9 +128,9 @@
 			_debug:		debug
 		}
 
-		sendDebug(auction,
+		sendDebug(auction._debug,
 		{
-			event:		'begin',
+			event:		'init_valid',
 			auction:	auction.id,
 			bidders:	bidders
 		});
@@ -141,7 +194,7 @@
 
 			if (timeout)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -154,7 +207,7 @@
 
 			if (result === null)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -166,7 +219,7 @@
 
 			if (!result || !result.seatbid)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -177,9 +230,9 @@
 				continue;
 			}
 
-			if (result.cur && result.cur != auction.request.cur[0])
+			if (result.cur && result.cur !== auction.request.cur)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -194,7 +247,7 @@
 
 			if (!seatbid || !seatbid.bid)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -209,7 +262,7 @@
 
 			if (!bid || !bid.creative || !bid.price)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -222,7 +275,7 @@
 
 			if (!bid.signature)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -235,7 +288,7 @@
 
 			if (bid.id && bid.id != auction.request.imp[0].id)
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
@@ -254,7 +307,7 @@
 				{
 					if (auction.request.badv[domBlId] === bid.adomain)
 					{
-						sendDebug(auction,
+						sendDebug(auction._debug,
 						{
 							auction:	auction.id,
 							bidder:		bidders[i].id,
@@ -272,7 +325,7 @@
 
 			currentPrice = bid.price;
 
-			sendDebug(auction,
+			sendDebug(auction._debug,
 			{
 				auction:	auction.id,
 				bidder:		bidders[i].id,
@@ -301,7 +354,7 @@
 
 		secondPrice += 0.01;
 
-		sendDebug(auction,
+		sendDebug(auction._debug,
 		{
 			event:		'end',
 			auction:	auction.id,
@@ -343,7 +396,7 @@
 		{
 			if (timeout.signal(/*bidder*/))
 			{
-				sendDebug(auction,
+				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidder.id,
@@ -358,7 +411,15 @@
 
 	var acceptBidder = function (bidder, auction)
 	{
-		var filters = bidder.filters;
+		var filters;
+
+		if (bidder.id === undefined)
+			return false;
+
+		if (!bidder.bid_ep)
+			return false;
+
+		filters = bidder.filters;
 
 		if (filters === undefined)
 			return true;
@@ -545,7 +606,7 @@
 		}
 	};
 
-	var renderImpressionPixel = function(domContainer, bids);
+	var renderImpressionPixel = function(domContainer, bids)
 	{
 		var pixel = document.createElement('img');
 
@@ -554,10 +615,10 @@
 		domContainer.appendChild(pixel);
 	}
 
-	var sendDebug = function (auction, data)
+	var sendDebug = function (debug, data)
 	{
-		if (auction._debug !== undefined)
-			window.parent.postMessage({data: data, id: auction._debug}, document.location.href);
+		if (debug !== undefined)
+			window.parent.postMessage({data: data, id: debug}, document.location.href);
 	};
 
 	addEventListener('message', start, false);
