@@ -653,7 +653,7 @@
 		var url = statUrl;
 		var firstParam = true;
 		for(var key in parts) {
-			url = url + (firstParam ? '?' : '&') + key + '=' + parts[key];
+			url = url + (firstParam ? '?' : '&') + key + '=' + encodeURIComponent(parts[key]);
 			firstParam = false;
 		}
 		addPixel(url, domContainer);
