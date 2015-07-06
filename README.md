@@ -4,9 +4,10 @@ BidTorrent JavaScript client
 Initial setup
 -------------
 
-* Install npm
+* Install nodejs (which includes npm)
 * Install grunt-cli: `npm install -g grunt-cli`
 * Install node modules: `npm install`
+* Generate all files once: `grunt release`
 
 Development
 -----------
