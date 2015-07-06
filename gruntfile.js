@@ -54,10 +54,16 @@ module.exports = function (grunt)
 		},
 
 		watch: {
-			files: ['src/**/*.js', 'src/**/*.less'],
-			tasks: ['browserify', 'less:development'],
 			options: {
 				spawn: false
+			},
+			scripts: {
+				files: ['src/**/*.js'],
+				tasks: ['browserify'],
+			},
+			styles: {
+				files: ['src/**/*.less'],
+				tasks: ['less:development'],
 			}
 		}
 	});
