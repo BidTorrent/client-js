@@ -313,7 +313,8 @@
 		(
 			winner.creative,
 			winner.nurl,
-			secondPrice
+			secondPrice,
+			results
 		);
 	};
 
@@ -455,7 +456,7 @@
 		return true;
 	}
 
-	var makeSucceededHtml = function (creativeCode, notifyUrl, secondPrice)
+	var makeSucceededHtml = function (creativeCode, notifyUrl, secondPrice, results)
 	{
 		var creativeImg;
 		var pixel;
