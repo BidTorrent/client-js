@@ -226,7 +226,7 @@ var Auction = {
 
 			bid = seatbid.bid[0];
 
-			if (!bid || !bid.creative || !bid.price)
+			if (!bid || !bid.adm || !bid.price)
 			{
 				sendDebug(auction._debug,
 				{
@@ -330,7 +330,7 @@ var Auction = {
 
 		domContainer = Auction.makeSucceededHtml
 		(
-			winner.creative,
+			winner.adm,
 			winner.nurl,
 			secondPrice
 		);
