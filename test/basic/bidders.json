@@ -1,7 +1,7 @@
 [
 	{
 		"id": 1,
-		"bid_ep": "http://test.bidtorrent.io/criteoBid.php",
+		"bid_ep": "http://bt.criteo.com/criteoBid.php",
 		"name": "Criteo"
 	},
 	{
