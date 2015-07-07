@@ -23,15 +23,15 @@ var Auction = {
 
 		// if publisher country is not part of whitelist countries => bidder banished
 		// if publisher country is part of blacklist countries => bidder banished
-		if (filters.pub_ctry !== undefined && 
-			filters.pub_ctry.length !== 0 && 
+		if (filters.pub_ctry !== undefined &&
+			filters.pub_ctry.length !== 0 &&
 			auction.config.site.publisher.country !== undefined)
 		{
 			// if whitelist mode
 			if (filters.pub_ctry_wl !== undefined && filters.pub_ctry_wl === true)
 			{
 				var ctryId = 0;
-				
+
 				for (; ctryId < filters.pub_ctry.length; ++ctryId)
 				{
 					if (filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
@@ -81,10 +81,10 @@ var Auction = {
 		}
 
 		// if 1 site category of publisher is blacklisted per bidder => bidder banished
-		if (filters.cat_bl !== undefined && 
-			auction.config.site !== undefined && 
+		if (filters.cat_bl !== undefined &&
+			auction.config.site !== undefined &&
 			auction.config.site.cat !== undefined)
-		{ 
+		{
 			for (var catId = 0; catId < filters.cat_bl.length; ++catId)
 			{
 				var catBl = filters.cat_bl[catId];
@@ -162,7 +162,7 @@ var Auction = {
 				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
-					bidder:		bidders[i].id,	
+					bidder:		bidders[i].id,
 					event:		'bid_filter'
 				});
 
@@ -335,13 +335,11 @@ var Auction = {
 			secondPrice
 		);
 
-		Auction.renderImpressionPixel(
-			config,
-			auction,
-			bidders,
-			results,
-			domContainer,
-			statUrl);
+		Auction.addPixel
+		(
+			Auction.renderImpressionPixel(config, auction, bidders, results, statUrl),
+			domContainer
+		);
 	},
 
 	makeSucceededHtml: function (creativeCode, notifyUrl, secondPrice)
@@ -459,12 +457,13 @@ var Auction = {
 	/*
 	* Renders an impression pixel in the bottom of the ad
 	*/
-	renderImpressionPixel: function(config, auction, bidders, results, domContainer, statUrl)
+	renderImpressionPixel: function (config, auction, bidders, results, statUrl)
 	{
-		var bids;
 		var bid;
 		var bidder;
+		var first;
 		var response;
+		var seatbid;
 		var status;
 
 		var parts = {
@@ -473,36 +472,36 @@ var Auction = {
 			'f': auction.config.imp[0].bidfloor
 		};
 
-		for (var resultIndex = 0; resultIndex < results.length; resultIndex++)
+		for (var i = 0; i < results.length; i++)
 		{
-			response = results[resultIndex][1];
-			status = results[resultIndex][0];
+			response = results[i][1];
+			status = results[i][0];
 
-			if (response === undefined || status !== 'take')
+			if (!response || !response.seatbid || status !== 'take')
 				continue;
 
-			bidder = bidders[resultIndex];
-			bids = response.seatbid;
+			bidder = bidders[i];
+			seatbid = response.seatbid[0];
 
-			for (var bidIndex = 0; bidIndex < bids.length; bidIndex++)
-			{
-				var bid = bids[bidIndex].bid[0];
-				parts['d[' + bidders[resultIndex].id + ']'] =
-					bid.price
-					+ '-'
-					+ bid.ext.signature;
-			}
+			if (!seatbid || !seatbid.bid)
+				continue;
+
+			bid = seatbid[0];
+
+			if (!bid || !bid.ext || !bid.ext.signature || !bid.price)
+				continue;
+
+			parts['d[' + bidders[i].id + ']'] = bid.price + '-' + bid.ext.signature;
 		}
 
-		var url = statUrl;
-		var firstParam = true;
 		for (var key in parts)
 		{
-			url = url + (firstParam ? '?' : '&') + key + '=' + encodeURIComponent(parts[key]);
-			firstParam = false;
+			statUrl = statUrl + (first ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(parts[key]);
+
+			first = false;
 		}
 
-		Auction.addPixel(url, domContainer);
+		return statUrl;
 	},
 
 	addPixel: function (url, parent)
