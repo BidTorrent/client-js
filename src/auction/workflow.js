@@ -130,6 +130,7 @@ var Auction = {
 	{
 		var bid;
 		var currentPrice;
+		var found;
 		var index;
 		var seatbid;
 		var secondPrice;
@@ -238,7 +239,7 @@ var Auction = {
 				continue;
 			}
 
-			if (!bid.signature)
+			if (!bid.ext || !bid.ext.signature)
 			{
 				sendDebug(auction._debug,
 				{
@@ -264,28 +265,28 @@ var Auction = {
 				continue;
 			}
 
-			if (bid.adomain && auction.request.badv)
+			if (bid.adomain && bid.adomain.length > 0 && auction.request.badv)
 			{
-				var domBlId = 0;
+				found = false;
 
-				for (; domBlId < auction.request.badv.length; ++domBlId)
+				for (var i = 0; !found && i < auction.request.badv.length; ++i)
 				{
-					if (auction.request.badv[domBlId] === bid.adomain)
-					{
-						sendDebug(auction._debug,
-						{
-							auction:	auction.id,
-							bidder:		bidders[i].id,
-							event:		'bid_error',
-							reason:		'invalid advertiser domain'
-						});
-
-						break;
-					}
+					for (var j = 0; !found && j < bid.adomain.length; ++j)
+						found = auction.request.badv[i] === bid.adomain[j];
 				}
 
-				if (domBlId !== auction.request.badv.length)
+				if (found)
+				{
+					sendDebug(auction._debug,
+					{
+						auction:	auction.id,
+						bidder:		bidders[i].id,
+						event:		'bid_error',
+						reason:		'invalid advertiser domain'
+					});
+
 					continue;
+				}
 			}
 
 			currentPrice = bid.price;
@@ -489,7 +490,7 @@ var Auction = {
 				parts['d[' + bidders[resultIndex].id + ']'] =
 					bid.price
 					+ '-'
-					+ bid.signature;
+					+ bid.ext.signature;
 			}
 		}
 
