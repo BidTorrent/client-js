@@ -36,6 +36,7 @@ var Query = {
 		future = new Future();
 
 		xhr = new XMLHttpRequest();
+		xhr.withCredentials = true;
 		xhr.onreadystatechange = function ()
 		{
 			if (xhr.readyState === 4)
