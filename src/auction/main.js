@@ -20,44 +20,37 @@
 		Future
 			.bind
 			(
-				typeof bidders === 'string' ? Query.result(bidders) : Future.make(bidders),
-				typeof config === 'string' ? Query.result(config) : Future.make(config)
+				typeof bidders === 'string' ? Query.json(bidders) : Future.make(bidders),
+				typeof config === 'string' ? Query.json(config) : Future.make(config)
 			)
-			.then(
-				function(biddersResult, configResult)
-				{
-					var bidders;
-					var config;
-					var debugId;
+			.then(function (biddersResult, configResult)
+			{
+				var bidders;
+				var config;
+				var debugId;
 
-					if (!Query.hasValidStatus(biddersResult) ||
-						!Query.hasValidStatus(configResult))
-						return;
+				if (!Query.isStatusValid(biddersResult[1]) ||
+					!Query.isStatusValid(configResult[1]))
+					return;
 
-					bidders = Query.json(biddersResult)
-					config = Query.json(configResult);
-					debugId = debug ? index : undefined;
+				debugId = debug ? index : undefined;
 
-					applyDefaultValue(config);
+				applyDefaultValue(configResult[0]);
 
-					if (!isConfigOK(config, debugId))
-						return;
+				if (!isConfigOK(configResult[0], debugId))
+					return;
 
-					everythingLoaded(bidders, config, slots[0], debugId, statUrl);
-				});
+				everythingLoaded(biddersResult[0], configResult[0], slots[0], debugId, statUrl);
+			});
 	};
 
 	var applyDefaultValue = function(config)
 	{
 		config.cur = config.cur || ['USD'];
-
+		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.0;
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
-
-		if(!config.imp || config.img.length == 0)
-			config.imp = [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.0;
-
 		config.tmax = config.tmax || 500;
 	}
 
@@ -147,11 +140,10 @@
 		});
 
 		auctionBegin(auction)
-			.then(
-				function ()
-				{
-					auctionEnd(auction, bidders, arguments, config, statUrl);
-				});
+			.then(function ()
+			{
+				auctionEnd(auction, bidders, arguments, config, statUrl);
+			});
 	}
 
 	var formatBidRequest = function (id, config, slot)
@@ -189,28 +181,24 @@
 		return auctionRequest;
 	};
 
-	var auctionEnd = function (auction, bidders, queryResults, config, statUrl)
+	var auctionEnd = function (auction, bidders, results, config, statUrl)
 	{
 		var bid;
 		var currentPrice;
 		var index;
 		var seatbid;
 		var secondPrice;
-		var timeout;
 		var winner;
 		var domContainer;
 
 		secondPrice = auction.config.floor;
-		timeout = new Date().getTime() >= auction.timeout;
 
-		for (var i = 0; i < queryResults.length; ++i)
+		for (var i = 0; i < results.length; ++i)
 		{
-			var json;
-			var queryResult;
+			var response = results[i][1];
+			var status = results[i][0];
 
-			queryResult = queryResults[i];
-
-			if (timeout)
+			if (status === 'expire')
 			{
 				sendDebug(auction._debug,
 				{
@@ -223,7 +211,7 @@
 				continue;
 			}
 
-			if (!Query.hasValidStatus(queryResult) || !queryResult || queryResult.length <= 1)
+			if (status === 'filter')
 			{
 				sendDebug(auction._debug,
 				{
@@ -235,7 +223,8 @@
 				continue;
 			}
 
-			if (queryResult[1] == 204)
+			// FIXME: should not be reported as an error
+			if (status === 'pass')
 			{
 				sendDebug(auction._debug,
 				{
@@ -248,22 +237,20 @@
 				continue;
 			}
 
-			json = Query.json(queryResult);
-
-			if (!json || !json.seatbid)
+			if (status === 'empty' || !response || !response.seatbid)
 			{
 				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
-					reason:		'empty'
+					reason:		'empty response'
 				});
 
 				continue;
 			}
 
-			if (json.cur && json.cur !== auction.request.cur)
+			if (response.cur && response.cur !== auction.request.cur)
 			{
 				sendDebug(auction._debug,
 				{
@@ -276,7 +263,7 @@
 				continue;
 			}
 
-			seatbid = json.seatbid[0];
+			seatbid = response.seatbid[0];
 
 			if (!seatbid || !seatbid.bid)
 			{
@@ -406,7 +393,7 @@
 			config,
 			auction,
 			bidders,
-			queryResults,
+			results,
 			domContainer,
 			statUrl);
 	};
@@ -422,7 +409,7 @@
 			if (acceptBidder(bidder, auction))
 				futures.push(auctionSend(auction, bidder));
 			else
-				futures.push(Future.make(null));
+				futures.push(Future.make('filter', undefined));
 		}
 
 		return Future.bind.apply(null, futures);
@@ -432,27 +419,26 @@
 	{
 		var timeout = new Future();
 
-		setTimeout(
-			function ()
-			{
-				if (timeout.signal(/*bidder*/))
-				{
-					sendDebug(auction._debug,
-					{
-						auction:	auction.id,
-						bidder:		bidder.id,
-						event:		'bid_filter',
-						reason:		'timeout'
-					});
-				}
-			},
-			auction.config.tmax);
+		setTimeout(function ()
+		{
+			timeout.signal(undefined, 408); // Force a timeout response
+		}, auction.config.tmax);
 
-		return Future.first(
-			Query.result(
-				bidder.bid_ep,
-				auction.request),
-			timeout);
+		return Future
+			.first(Query.json(bidder.bid_ep, auction.request), timeout)
+			.chain(function (json, status)
+			{
+				if (status === 408 || new Date().getTime() >= auction.timeout)
+					return ['expire', undefined];
+
+				if (status === 204)
+					return ['pass', undefined];
+
+				if (json === undefined)
+					return ['empty', undefined];
+
+				return ['take', json];
+			});
 	};
 
 	var acceptBidder = function (bidder, auction)
@@ -546,7 +532,6 @@
 			}
 		}
 
-
 		// if the publisher domain is blacklisted per bidder => bidder banished
 		if (filtes.pub !== undefined)
 		{
@@ -558,7 +543,6 @@
 					return false;
 			}
 		}
-		
 
 		return true;
 	}
@@ -652,11 +636,11 @@
 	*/
 	var renderImpressionPixel = function(config, auction, bidders, results, domContainer, statUrl)
 	{
-		var response;
 		var bids;
 		var bid;
 		var bidder;
-		var json;
+		var response;
+		var status;
 
 		var parts = {
 			'a': auction.id,
@@ -664,21 +648,18 @@
 			'f': auction.config.imp[0].bidfloor
 		};
 
-		for(var resultIndex = 0; resultIndex < results.length; resultIndex++)
+		for (var resultIndex = 0; resultIndex < results.length; resultIndex++)
 		{
-			response = results[resultIndex];
-			if (response == null)
-				continue;
+			response = results[resultIndex][1];
+			status = results[resultIndex][0];
 
-			json = Query.json(response);
-			if (!json)
+			if (response === undefined || status !== 'take')
 				continue;
 
 			bidder = bidders[resultIndex];
+			bids = response.seatbid;
 
-			bids = json.seatbid;
-
-			for(var bidIndex = 0; bidIndex < bids.length; bidIndex ++)
+			for (var bidIndex = 0; bidIndex < bids.length; bidIndex++)
 			{
 				var bid = bids[bidIndex].bid[0];
 				parts['d[' + bidders[resultIndex].id + ']'] =
@@ -690,7 +671,8 @@
 
 		var url = statUrl;
 		var firstParam = true;
-		for(var key in parts) {
+		for (var key in parts)
+		{
 			url = url + (firstParam ? '?' : '&') + key + '=' + encodeURIComponent(parts[key]);
 			firstParam = false;
 		}

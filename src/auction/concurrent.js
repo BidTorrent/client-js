@@ -116,6 +116,25 @@ Future.make = function ()
 };
 
 /*
+** Register conversion lambda on future instance, conversion will be performed
+** when parent future completes. Lambda expects parent future values and must
+** return an array of values for child future instance.
+** Usage:
+**    future.chain(function(value1, value2, ...) { return [value1 * 2, value2 * 0.5]; });
+*/
+Future.prototype.chain = function (lambda)
+{
+	var future = new Future();
+
+	this.then(function ()
+	{
+		future.signal.apply(future, lambda.apply(null, arguments));
+	});
+
+	return future;
+};
+
+/*
 ** Complete future instance with given values. A future instance can only be
 ** completed once, subsequent calls will be ignored.
 ** Usage:
