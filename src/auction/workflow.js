@@ -355,7 +355,7 @@ var Auction = {
 
 		if (notifyUrl)
 		{
-			addPixel(
+			Auction.addPixel(
 				notifyUrl.replace('${AUCTION_PRICE}', secondPrice),
 				document.body
 			);
@@ -369,11 +369,13 @@ var Auction = {
 	{
 		var timeout = new Future();
 
+		// Schedule timeout response (HTTP 408)
 		setTimeout(function ()
 		{
-			timeout.signal(undefined, 408); // Force a timeout response
+			timeout.signal(undefined, 408);
 		}, auction.config.tmax);
 
+		// Wrap either actual bidder response or timeout
 		return Future
 			.first(Query.json(bidder.bid_ep, auction.request), timeout)
 			.chain(function (json, status)
@@ -502,7 +504,8 @@ var Auction = {
 		Auction.addPixel(url, domContainer);
 	},
 
-	addPixel: function (url, parent) {
+	addPixel: function (url, parent)
+	{
 		var pixel = document.createElement('img');
 		pixel.height = '1px';
 		pixel.width = '1px';
