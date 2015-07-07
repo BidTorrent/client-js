@@ -2,7 +2,7 @@
 var Future = require('./concurrent').Future;
 
 var Query = {
-	json: function (url, data)
+	result: function (url, data)
 	{
 		var future;
 		var xhr;
@@ -10,28 +10,25 @@ var Query = {
 		future = new Future();
 
 		xhr = new XMLHttpRequest();
+
 		xhr.onreadystatechange = function ()
 		{
 			var json;
+			var status;
 
 			if (xhr.readyState !== 4)
 				return;
 
-			if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
+			try
 			{
-				try
-				{
-					json = JSON.parse(xhr.responseText);
-				}
-				catch (e)
-				{
-					json = undefined;
-				}
+				json = JSON.parse(xhr.responseText);
 			}
-			else
+			catch (e)
+			{
 				json = undefined;
+			}
 
-			future.signal(json);
+			future.signal(json, xhr.status);
 		};
 
 		if (data !== undefined)
@@ -46,6 +43,16 @@ var Query = {
 		}
 
 		return future;
+	},
+
+	json: function(result)
+	{
+		return result[0];
+	},
+
+	hasValidStatus: function(result)
+	{
+		return (result[1] >= 200 && result[1] < 300) || result[1] === 0;
 	}
 };
 

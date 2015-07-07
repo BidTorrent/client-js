@@ -20,24 +20,31 @@
 		Future
 			.bind
 			(
-				typeof bidders === 'string' ? Query.json(bidders) : Future.make(bidders),
-				typeof config === 'string' ? Query.json(config) : Future.make(config)
+				typeof bidders === 'string' ? Query.result(bidders) : Future.make(bidders),
+				typeof config === 'string' ? Query.result(config) : Future.make(config)
 			)
-			.then(function(biddersArgs, configArgs)
-			{
-				var bidders = biddersArgs[0] || [];
-				var config = configArgs[0] || {};
-				var debugId;
+			.then(
+				function(biddersResult, configResult)
+				{
+					var bidders;
+					var config;
+					var debugId;
 
-				debugId = debug ? index : undefined;
+					if (!Query.hasValidStatus(biddersResult) ||
+						!Query.hasValidStatus(configResult))
+						return;
 
-				applyDefaultValue(config);
+					bidders = Query.json(biddersResult)
+					config = Query.json(configResult);
+					debugId = debug ? index : undefined;
 
-				if (!isConfigOK(config, debugId))
-					return;				
+					applyDefaultValue(config);
 
-				everythingLoaded(bidders, config, slots[0], debugId, statUrl);
-			});
+					if (!isConfigOK(config, debugId))
+						return;
+
+					everythingLoaded(bidders, config, slots[0], debugId, statUrl);
+				});
 	};
 
 	var applyDefaultValue = function(config)
@@ -135,15 +142,12 @@
 			bidders:	bidders
 		});
 
-		auctionBegin(auction).then(function ()
-		{
-			var results = [];
-			for (var i = 0; i < arguments.length; i++) 
-			{
-				results.push(arguments[i][0]);
-			}
-			auctionEnd(auction, bidders, results, config, statUrl);
-		});
+		auctionBegin(auction)
+			.then(
+				function ()
+				{
+					auctionEnd(auction, bidders, arguments, config, statUrl);
+				});
 	}
 
 	var formatBidRequest = function (id, config, slot)
@@ -181,7 +185,7 @@
 		return auctionRequest;
 	};
 
-	var auctionEnd = function (auction, bidders, results, config, statUrl)
+	var auctionEnd = function (auction, bidders, queryResults, config, statUrl)
 	{
 		var bid;
 		var currentPrice;
@@ -195,9 +199,12 @@
 		secondPrice = auction.config.floor;
 		timeout = new Date().getTime() >= auction.timeout;
 
-		for (var i = 0; i < results.length; ++i)
+		for (var i = 0; i < queryResults.length; ++i)
 		{
-			var result = results[i];
+			var json;
+			var queryResult;
+
+			queryResult = queryResults[i];
 
 			if (timeout)
 			{
@@ -212,19 +219,34 @@
 				continue;
 			}
 
-			if (result === null)
+			if (!Query.hasValidStatus(queryResult) || !queryResult || queryResult.length <= 1)
 			{
 				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
-					bidder:		bidders[i].id,
+					bidder:		bidders[i].id,	
 					event:		'bid_filter'
 				});
 
 				continue;
 			}
 
-			if (!result || !result.seatbid)
+			if (queryResult[1] == 204)
+			{
+				sendDebug(auction._debug,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_error',
+					reason:		'no bid'
+				});
+
+				continue;
+			}
+
+			json = Query.json(queryResult);
+
+			if (!json || !json.seatbid)
 			{
 				sendDebug(auction._debug,
 				{
@@ -237,7 +259,7 @@
 				continue;
 			}
 
-			if (result.cur && result.cur !== auction.request.cur)
+			if (json.cur && json.cur !== auction.request.cur)
 			{
 				sendDebug(auction._debug,
 				{
@@ -250,7 +272,7 @@
 				continue;
 			}
 
-			seatbid = result.seatbid[0];
+			seatbid = json.seatbid[0];
 
 			if (!seatbid || !seatbid.bid)
 			{
@@ -380,10 +402,9 @@
 			config,
 			auction,
 			bidders,
-			results,
+			queryResults,
 			domContainer,
-			statUrl
-		);
+			statUrl);
 	};
 
 	var auctionBegin = function (auction)
@@ -407,21 +428,27 @@
 	{
 		var timeout = new Future();
 
-		setTimeout(function ()
-		{
-			if (timeout.signal(/*bidder*/))
+		setTimeout(
+			function ()
 			{
-				sendDebug(auction._debug,
+				if (timeout.signal(/*bidder*/))
 				{
-					auction:	auction.id,
-					bidder:		bidder.id,
-					event:		'bid_filter',
-					reason:		'timeout'
-				});
-			}
-		}, auction.config.tmax);
+					sendDebug(auction._debug,
+					{
+						auction:	auction.id,
+						bidder:		bidder.id,
+						event:		'bid_filter',
+						reason:		'timeout'
+					});
+				}
+			},
+			auction.config.tmax);
 
-		return Future.first(Query.json(bidder.bid_ep, auction.request), timeout);
+		return Future.first(
+			Query.result(
+				bidder.bid_ep,
+				auction.request),
+			timeout);
 	};
 
 	var acceptBidder = function (bidder, auction)
@@ -625,6 +652,7 @@
 		var bids;
 		var bid;
 		var bidder;
+		var json;
 
 		var parts = {
 			'a': auction.id,
@@ -635,10 +663,17 @@
 		for(var resultIndex = 0; resultIndex < results.length; resultIndex++)
 		{
 			response = results[resultIndex];
-			if (response == null) continue;
+			if (response == null)
+				continue;
+
+			json = Query.json(response);
+			if (!json)
+				continue;
+
 			bidder = bidders[resultIndex];
 
-			bids = response.seatbid;
+			bids = json.seatbid;
+
 			for(var bidIndex = 0; bidIndex < bids.length; bidIndex ++)
 			{
 				var bid = bids[bidIndex].bid[0];
