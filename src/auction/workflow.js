@@ -1,4 +1,5 @@
 
+var Element = require('./dom').Element;
 var Future = require('./concurrent').Future;
 var Query = require('./http').Query;
 
@@ -131,10 +132,10 @@ var Auction = {
 		var bid;
 		var currentPrice;
 		var found;
-		var index;
 		var seatbid;
 		var secondPrice;
-		var winner;
+		var winnerBid;
+		var winnerBidder;
 		var domContainer;
 
 		secondPrice = auction.config.imp[0].bidfloor;
@@ -226,14 +227,27 @@ var Auction = {
 
 			bid = seatbid.bid[0];
 
-			if (!bid || !bid.adm || !bid.price)
+			if (!bid || !bid.adm)
 			{
 				sendDebug(auction._debug,
 				{
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
-					reason:		'no price'
+					reason:		'missing creative'
+				});
+
+				continue;
+			}
+
+			if (!bid.price)
+			{
+				sendDebug(auction._debug,
+				{
+					auction:	auction.id,
+					bidder:		bidders[i].id,
+					event:		'bid_error',
+					reason:		'missing or zero price'
 				});
 
 				continue;
@@ -299,19 +313,19 @@ var Auction = {
 				price:		currentPrice
 			});
 
-			if (winner === undefined || winner.price < currentPrice)
+			if (winnerBid === undefined || winnerBid.price < currentPrice)
 			{
-				if (winner !== undefined)
-					secondPrice = winner.price;
+				if (winnerBid !== undefined)
+					secondPrice = winnerBid.price;
 
-				index = i;
-				winner = bid;
+				winnerBidder = bidders[i];
+				winnerBid = bid;
 			}
 			else if (secondPrice === undefined || currentPrice > secondPrice)
 				secondPrice = currentPrice;
 		}
 
-		if (winner === undefined)
+		if (winnerBid === undefined)
 		{
 			document.body.innerHTML = auction.config.passback;
 
@@ -324,22 +338,18 @@ var Auction = {
 		{
 			event:		'end',
 			auction:	auction.id,
-			winner:		bidders[index].id,
+			winner:		winnerBidder.id,
 			price:		secondPrice
 		});
 
 		domContainer = Auction.makeSucceededHtml
 		(
-			winner.adm,
-			winner.nurl,
+			winnerBid.adm,
+			winnerBid.nurl,
 			secondPrice
 		);
 
-		Auction.addPixel
-		(
-			Auction.renderImpressionPixel(config, auction, bidders, results, statUrl),
-			domContainer
-		);
+		Element.pixel(domContainer, Auction.renderImpressionPixel(config, auction, bidders, results, statUrl));
 	},
 
 	makeSucceededHtml: function (creativeCode, notifyUrl, secondPrice)
@@ -348,19 +358,14 @@ var Auction = {
 		var pixel;
 
 		creativeImg = document.createElement('div');
-		creativeImg.innerHTML  = creativeCode;
 
 		document.body.appendChild(creativeImg);
 
-		if (notifyUrl)
-		{
-			Auction.addPixel(
-				notifyUrl.replace('${AUCTION_PRICE}', secondPrice),
-				document.body
-			);
-		}
+		Element.html(creativeImg, creativeCode);
 
-		Auction.evalBodyJS(document.body);
+		if (notifyUrl)
+			Element.pixel(document.body, notifyUrl.replace('${AUCTION_PRICE}', secondPrice));
+
 		return creativeImg;
 	},
 
@@ -377,7 +382,7 @@ var Auction = {
 		// Wrap either actual bidder response or timeout
 		return Future
 			.first(Query.json(bidder.bid_ep, auction.request), timeout)
-			.chain(function (json, status)
+			.chain(function (response, status)
 			{
 				if (status === 408 || new Date().getTime() >= auction.timeout)
 					return ['expire', undefined];
@@ -385,73 +390,11 @@ var Auction = {
 				if (status === 204)
 					return ['pass', undefined];
 
-				if (json === undefined)
+				if (response === undefined)
 					return ['empty', undefined];
 
-				return ['take', json];
+				return ['take', response];
 			});
-	},
-
-	evalBodyJS: function (body)
-	{
-		var apply;
-		var node;
-		var nodes;
-		var trick;
-
-		apply = function (node)
-		{
-			var child;
-			var nodes = [];
-
-			for (var i = 0; i < node.childNodes.length; ++i)
-			{
-				child = node.childNodes[i];
-
-				if (child.nodeName.toUpperCase() === 'SCRIPT' && (!child.type || child.type.toLowerCase() === 'text/javascript'))
-					nodes.push(child);
-				else
-					nodes = nodes.concat(apply(child));
-			}
-
-			return nodes;
-		};
-
-		function trick(elem)
-		{
-			var script = document.createElement('script');
-			var source = elem.text || elem.textContent || elem.innerHTML || '';
-			var target = document.getElementsByTagName('head')[0] || document.documentElement;
-
-			script.src = elem.src;
-			script.type = 'text/javascript';
-
-			try
-			{
-				// Standard way to set script source code
-				script.appendChild(document.createTextNode(source));
-			}
-			catch (e)
-			{
-				// Workaround for IE <= 7
-				script.text = source;
-			}
-
-			target.insertBefore(script, target.firstChild);
-			target.removeChild(script);
-		};
-
-		nodes = apply(body);
-
-		for (i = 0; i < nodes.length; i++)
-		{
-			node = nodes[i];
-
-			if (node.parentNode)
-				node.parentNode.removeChild(node);
-
-			trick(node);
-		}
 	},
 
 	/*
@@ -502,15 +445,6 @@ var Auction = {
 		}
 
 		return statUrl;
-	},
-
-	addPixel: function (url, parent)
-	{
-		var pixel = document.createElement('img');
-		pixel.height = '1px';
-		pixel.width = '1px';
-		pixel.src = url;
-		parent.appendChild(pixel);
 	}
 };
 
