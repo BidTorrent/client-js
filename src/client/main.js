@@ -31,7 +31,7 @@ bidTorrent = (function ()
 			// Populate initialization object with missing default value
 			init = init || {};
 
-			if (init.config === undefined)
+			if (init.config === undefined && init.configUrl === undefined)
 			{
 				console.error('[bidtorrent] no configuration object/URL specified');
 				return;
@@ -39,7 +39,7 @@ bidTorrent = (function ()
 
 			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
 			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
-			init.config = url(init.config);
+			init.configUrl = url(init.configUrl);
 			init.slots = init.slots || [];
 			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
 
@@ -72,6 +72,7 @@ bidTorrent = (function ()
 						iframe.contentWindow.postMessage({
 							bidders:	init.bidders,
 							config:		init.config,
+							configUrl:	init.configUrl,
 							debug:		init.debug,
 							index:		index,
 							slots:		[{
