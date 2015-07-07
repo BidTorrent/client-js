@@ -137,7 +137,7 @@ var Auction = {
 		var winner;
 		var domContainer;
 
-		secondPrice = auction.config.floor;
+		secondPrice = auction.config.imp[0].bidfloor;
 
 		for (var i = 0; i < results.length; ++i)
 		{
@@ -269,10 +269,10 @@ var Auction = {
 			{
 				found = false;
 
-				for (var i = 0; !found && i < auction.request.badv.length; ++i)
+				for (var j = 0; !found && j < auction.request.badv.length; ++j)
 				{
-					for (var j = 0; !found && j < bid.adomain.length; ++j)
-						found = auction.request.badv[i] === bid.adomain[j];
+					for (var k = 0; !found && k < bid.adomain.length; ++k)
+						found = auction.request.badv[j] === bid.adomain[k];
 				}
 
 				if (found)

@@ -49,7 +49,7 @@
 	{
 		config.cur = config.cur || ['USD'];
 		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.0;
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.01;
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
 		config.tmax = config.tmax || 500;
