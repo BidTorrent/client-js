@@ -5,8 +5,27 @@
 		"name": "Criteo"
 	},
 	{
+		"id": 2,
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
+        "filters" : {
+            "sampling": 1.00,
+            "pub_ctry": ["FR", "US"],
+            "pub_ctry_wl": true,
+            "user_lang": ["EU-us"],
+            "user_lang_wl": true,
+            "cat": ["IAB1-4"],
+            "pub": ["pr0n.com"]
+        },
+		"name": "Test #2"
+	},
+	{
 		"id": 3,
-		"bid_ep": "http://test.bidtorrent.io/testBid.php?type=jsdirect",
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
 		"name": "Test #3"
+	},
+	{
+		"id": 4,
+		"bid_ep": "http://test.bidtorrent.io/testBid.php",
+		"name": "Test #4"
 	}
 ]
