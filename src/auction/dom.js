@@ -82,3 +82,6 @@ var Element = {
 		}
 	}
 };
+
+// Module exports
+exports.Element = Element;
