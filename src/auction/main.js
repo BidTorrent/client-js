@@ -50,10 +50,14 @@
 	var applyDefaultValue = function(config)
 	{
 		config.cur = config.cur || ['USD'];
+
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
-		config.imp = config.imp || [{}];
+
+		if(!config.imp || config.img.length == 0)
+			config.imp = [{}];
 		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.0;
+
 		config.tmax = config.tmax || 500;
 	}
 
