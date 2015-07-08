@@ -32,41 +32,53 @@ bidTorrent = (function ()
 			// Populate initialization object with missing default value
 			init = init || {};
 
-			if (init.config === undefined && init.configUrl === undefined)
+			if (init.config === undefined)
 			{
-				console.error('[bidtorrent] no configuration object/URL specified');
+				console.error('[bidtorrent] no configuration object specified');
 				return;
 			}
 
 			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
 			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
 			init.configUrl = url(init.configUrl);
-			init.slots = init.slots || [];
-			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp');
+			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
 
-			// Start auctions on each configured slot
-			for (var i = 0; i < init.slots.length; ++i)
+			if (init.config.imp === undefined || init.config.imp.length === 0)
 			{
-				// Assign default values to slot parameters
-				slot = init.slots[i];
-				slot.element = slot.element || 'bidtorrent-ad';
+				console.error('[bidtorrent] At least one impression has to be specified');
+				return;
+			}
 
-				if (typeof slot.element === 'string')
-					slot.element = document.getElementById(slot.element);
+			for (var i = 0; i < init.config.imp.length; ++i)
+			{
+				var element;
+				var imp;
 
-				if (!slot.element)
+				imp = init.config.imp[i];
+
+				if (imp.id === undefined || typeof imp.id !== 'string')
 				{
-					console.error('[bidtorrent] no element configured for slot #' + i);
-					continue;
+					console.error('[bidtorrent] impression #' + i + ' is invalid');
+					return;
 				}
 
-				slot.floor = slot.floor || 0;
-				slot.height = slot.height || slot.element.offsetHeight;
-				slot.width = slot.width || slot.element.offsetWidth;
+				element = document.getElementById(imp.id);
+				if (!element)
+				{
+					console.error('[bidtorrent] no element found for ' + imp.id);
+					return;
+				}
+
+				if (imp.banner === undefined || imp.banner.w === undefined || imp.banner.h === undefined)
+				{
+					imp.banner = imp.banner || {};
+					imp.banner.h = imp.banner.h || element.offsetHeight;
+					imp.banner.w = imp.banner.w || element.offsetWidth;
+				}
 
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');
-				iframe.onload = (function (channel, slot)
+				iframe.onload = (function (channel)
 				{
 					return function ()
 					{
@@ -76,33 +88,28 @@ bidTorrent = (function ()
 							config:		init.config,
 							configUrl:	init.configUrl,
 							debug:		init.debug,
-							slots:		[{
-								floor:	slot.floor,
-								height:	slot.height,
-								width:	slot.width
-							}],
 							statUrl: 	init.statUrl
 						}, '*');
 					};
-				})(i, slot);
+				})(i);
 
 				iframe.frameBorder = 0;
-				iframe.height = slot.height + 'px';
+				iframe.height = imp.banner.h + 'px';
 				iframe.scrolling = 'no';
 				iframe.seamless = 'seamless';
-				iframe.width = slot.width + 'px';
+				iframe.width = imp.banner.w + 'px';
 				iframe.src = init.auction;
 
-				slot.element.appendChild(iframe);
+				element.appendChild(iframe);
 
 				// Create and append debug mode iframe
 				if (init.debug)
 				{
 					debug = document.createElement('div');
 					debug.className = 'bidtorrent-debug';
-					debug.style.width = slot.width + 'px';
+					debug.style.width = imp.banner.w + 'px';
 
-					slot.element.appendChild(debug);
+					element.appendChild(debug);
 
 					parse = document.createElement('a');
 					parse.href = init.auction;

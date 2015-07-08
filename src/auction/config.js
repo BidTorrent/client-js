@@ -51,7 +51,7 @@ var Config = {
 		if (configLocal.imp !== undefined)
 		{
 			result.imp = [];
-			result.imp.concat(configLocal.imp);
+			result.imp = result.imp.concat(configLocal.imp);
 		}
 
 		if (configRemote.site !== undefined)

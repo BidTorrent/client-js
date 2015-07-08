@@ -16,7 +16,6 @@
 		var bidders = event.data.bidders;
 		var channel = event.data.channel;
 		var debug = event.data.debug;
-		var slots = event.data.slots;
 		var statUrl = event.data.statUrl;
 
 		Future
@@ -35,7 +34,7 @@
 					!processConfig(configResult[0], channel))
 					return;
 
-				everythingLoaded(biddersResult[0], configResult[0], slots[0], channel, debug, statUrl);
+				everythingLoaded(biddersResult[0], configResult[0], channel, debug, statUrl);
 			});
 	};
 
@@ -60,7 +59,7 @@
 		return true;
 	}
 
-	var everythingLoaded = function (bidders, config, slot, channel, debug, statUrl)
+	var everythingLoaded = function (bidders, config, channel, debug, statUrl)
 	{
 		var send;
 
@@ -87,7 +86,7 @@
 			config:		config,
 			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
-			request:	formatBidRequest(id, config, slot)
+			request:	formatBidRequest(id, config)
 		}
 
 		if (debug)
@@ -103,7 +102,7 @@
 			});
 	}
 
-	var formatBidRequest = function (id, config, slot)
+	var formatBidRequest = function (id, config)
 	{
 		var auctionRequest;
 		var impression;
@@ -119,17 +118,7 @@
 				ua: navigator.userAgent
 			},
 			id: id,
-			imp: [{
-				banner: {
-					btype: config.imp[0].banner === undefined ? undefined : config.imp[0].banner.btype,
-					w: slot.width,
-					h: slot.height
-				},
-				bidfloor: slot.floor,
-				id: 1,
-				instl: config.imp[0].instl,
-				secure: config.imp[0].secure
-			}],
+			imp: config.imp,
 			site: config.site,
 			tmax: config.tmax,
 			user: {}

@@ -11,9 +11,13 @@
 			bidTorrent({
 				auction:	'../../build/auction.html',
 				bidders:	'bidders.json',
+				config: {
+					imp: [{
+						id: "desktop_ad_top"
+					}]
+				},
 				configUrl:	'publisher.json',
-				debug:		true,
-				slots:		[{element: 'desktop_ad_top'}]
+				debug:		true
 			});
 		</script>
 	</body>
