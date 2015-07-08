@@ -429,7 +429,7 @@ var Auction = {
 			if (!seatbid || !seatbid.bid)
 				continue;
 
-			bid = seatbid[0];
+			bid = seatbid.bid[0];
 
 			if (!bid || !bid.ext || !bid.ext.signature || !bid.price)
 				continue;
@@ -437,10 +437,10 @@ var Auction = {
 			parts['d[' + bidders[i].id + ']'] = bid.price + '-' + bid.ext.signature;
 		}
 
+		first = true;
 		for (var key in parts)
 		{
 			statUrl = statUrl + (first ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(parts[key]);
-
 			first = false;
 		}
 
