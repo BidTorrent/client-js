@@ -110,6 +110,19 @@ var Auction = {
 		return true;
 	},
 
+	applyMacros: function (template, auction, secondPrice)
+	{
+		return template
+			.replace('${AUCTION_AD_ID}', '')
+			.replace('${AUCTION_BID_ID}', '')
+			.replace('${AUCTION_CURRENCY}', '')
+			.replace('${AUCTION_ID}', auction.id)
+			.replace('${AUCTION_IMP_ID}', '')
+			.replace('${AUCTION_SEAT_ID}', '')
+			.replace('${AUCTION_PRICE}', secondPrice)
+			.replace('${CLICK_URL}', '');
+	},
+
 	begin: function (auction, debug)
 	{
 		var futures = [];
@@ -132,12 +145,12 @@ var Auction = {
 	end: function (auction, bidders, results, config, statUrl, debug)
 	{
 		var bid;
+		var creative;
 		var found;
 		var seatbid;
 		var secondPrice;
 		var winnerBid;
 		var winnerBidder;
-		var domContainer;
 
 		secondPrice = auction.config.imp[0].bidfloor;
 
@@ -253,42 +266,27 @@ var Auction = {
 				secondPrice = bid.price;
 		}
 
-		if (winnerBid === undefined)
+		// Build and insert creative element
+		creative = document.createElement('div');
+
+		document.body.appendChild(creative);
+
+		if (winnerBid !== undefined)
 		{
-			document.body.innerHTML = auction.config.passback;
+			secondPrice += 0.01;
 
-			return;
+			Element.html(creative, Auction.applyMacros(winnerBid.adm, auction, secondPrice));
+
+			if (winnerBid.nurl)
+				Element.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
+
+			if (statUrl)
+				Element.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, statUrl));
+
+			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
-
-		secondPrice += 0.01;
-
-		debug('end', {winner: winnerBidder.id, price: secondPrice});
-
-		domContainer = Auction.makeSucceededHtml
-		(
-			winnerBid.adm,
-			winnerBid.nurl,
-			secondPrice
-		);
-
-		Element.pixel(domContainer, Auction.renderImpressionPixel(config, auction, bidders, results, statUrl));
-	},
-
-	makeSucceededHtml: function (creativeCode, notifyUrl, secondPrice)
-	{
-		var creativeImg;
-		var pixel;
-
-		creativeImg = document.createElement('div');
-
-		document.body.appendChild(creativeImg);
-
-		Element.html(creativeImg, creativeCode);
-
-		if (notifyUrl)
-			Element.pixel(document.body, notifyUrl.replace('${AUCTION_PRICE}', secondPrice));
-
-		return creativeImg;
+		else
+			Element.html(creative, auction.config.passback || '');
 	},
 
 	send: function (auction, bidder)
