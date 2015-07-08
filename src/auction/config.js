@@ -100,7 +100,51 @@ var Config = {
 		if (configRemote.imp !== undefined)
 		{
 			result.imp = result.imp || [];
-			result.imp.concat(configRemote.imp);
+
+			for (var impId = 0; impId < configRemote.imp.length; ++impId)
+			{
+				var resImp;
+				var resImpId;
+				var impRemote;
+
+				impRemote = configRemote.imp[impId];
+				resImpId = 0;
+
+				for (; resImpId < result.imp.length; ++resImpId)
+				{
+					resImp = result.imp[resImpId];
+
+					if (result.imp[resImpId].id === impRemote.id &&
+						result.imp[resImpId].id !== undefined)
+						break;
+				}
+
+				if (resImpId === result.imp.length)
+					continue;
+
+				if (impRemote.bidfloor !== undefined)
+					resImp.bidfloor = impRemote.bidfloor;
+
+				if (impRemote.instl !== undefined)
+					resImp.instl = impRemote.instl;
+
+				if (impRemote.secure !== undefined)
+					resImp.secure = impRemote.secure;
+
+				if (impRemote.banner !== undefined)
+				{
+					resImp.banner = resImp.banner || {};
+
+					if (impRemote.banner.btype !== undefined)
+						resImp.banner.btype = impRemote.banner.btype;
+
+					if (impRemote.banner.h !== undefined)
+						resImp.banner.h = impRemote.banner.h;
+
+					if (impRemote.banner.w !== undefined)
+						resImp.banner.w = impRemote.banner.w;
+				}
+			}
 		}
 
 		return result;
