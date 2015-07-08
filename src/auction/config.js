@@ -1,4 +1,6 @@
 
+var Query = require('./http').Query;
+
 var Config = {
 	fetch: function (configUrl, configLocal)
 	{
@@ -18,7 +20,7 @@ var Config = {
 			});
   	},
 
-	merge = function (configRemote, configLocal)
+	merge: function (configRemote, configLocal)
 	{
 		var result;
 
