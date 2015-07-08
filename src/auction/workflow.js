@@ -124,11 +124,7 @@ var Auction = {
 				futures.push(Future.make('filter', undefined));
 		}
 
-		debug({
-			event:		'init_valid',
-			auction:	auction.id,
-			bidders:	auction.bidders
-		});
+		debug('init_valid', {bidders: auction.bidders});
 
 		return Future.bind.apply(null, futures);
 	},
@@ -136,7 +132,6 @@ var Auction = {
 	end: function (auction, bidders, results, config, statUrl, debug)
 	{
 		var bid;
-		var currentPrice;
 		var found;
 		var seatbid;
 		var secondPrice;
@@ -153,23 +148,14 @@ var Auction = {
 
 			if (status === 'expire')
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'timeout'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'timeout'});
 
 				continue;
 			}
 
 			if (status === 'filter')
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_filter'
-				});
+				debug('bid_filter', {bidder: bidders[i].id});
 
 				continue;
 			}
@@ -177,36 +163,21 @@ var Auction = {
 			// FIXME: should not be reported as an error
 			if (status === 'pass')
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'no bid'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'no bid'});
 
 				continue;
 			}
 
 			if (status === 'empty' || !response || !response.seatbid)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'empty response'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'empty response'});
 
 				continue;
 			}
 
 			if (response.cur && response.cur !== auction.request.cur)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'invalid currency'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency'});
 
 				continue;
 			}
@@ -215,12 +186,7 @@ var Auction = {
 
 			if (!seatbid || !seatbid.bid)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'no bid'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'no bid'});
 
 				continue;
 			}
@@ -229,48 +195,28 @@ var Auction = {
 
 			if (!bid || !bid.adm)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'missing creative'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'missing creative'});
 
 				continue;
 			}
 
 			if (!bid.price)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'missing or zero price'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'missing or zero price'});
 
 				continue;
 			}
 
 			if (!bid.ext || !bid.ext.signature)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'missing signature'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'missing signature'});
 
 				continue;
 			}
 
 			if (bid.impid && bid.impid != auction.request.imp[0].id)
 			{
-				debug({
-					auction:	auction.id,
-					bidder:		bidders[i].id,
-					event:		'bid_error',
-					reason:		'invalid imp id'
-				});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid imp id'});
 
 				continue;
 			}
@@ -287,27 +233,15 @@ var Auction = {
 
 				if (found)
 				{
-					debug({
-						auction:	auction.id,
-						bidder:		bidders[i].id,
-						event:		'bid_error',
-						reason:		'invalid advertiser domain'
-					});
+					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid advertiser domain'});
 
 					continue;
 				}
 			}
 
-			currentPrice = bid.price;
+			debug('bid_valid', {bidder: bidders[i].id, price: bid.price});
 
-			debug({
-				auction:	auction.id,
-				bidder:		bidders[i].id,
-				event:		'bid_valid',
-				price:		currentPrice
-			});
-
-			if (winnerBid === undefined || winnerBid.price < currentPrice)
+			if (winnerBid === undefined || winnerBid.price < bid.price)
 			{
 				if (winnerBid !== undefined)
 					secondPrice = winnerBid.price;
@@ -315,8 +249,8 @@ var Auction = {
 				winnerBidder = bidders[i];
 				winnerBid = bid;
 			}
-			else if (secondPrice === undefined || currentPrice > secondPrice)
-				secondPrice = currentPrice;
+			else if (secondPrice === undefined || bid.price > secondPrice)
+				secondPrice = bid.price;
 		}
 
 		if (winnerBid === undefined)
@@ -328,12 +262,7 @@ var Auction = {
 
 		secondPrice += 0.01;
 
-		debug({
-			event:		'end',
-			auction:	auction.id,
-			winner:		winnerBidder.id,
-			price:		secondPrice
-		});
+		debug('end', {winner: winnerBidder.id, price: secondPrice});
 
 		domContainer = Auction.makeSucceededHtml
 		(

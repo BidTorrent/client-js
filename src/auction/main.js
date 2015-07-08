@@ -43,11 +43,7 @@
 	{
 		if (!config.site || !config.site.publisher || config.site.publisher.id === undefined)
 		{
-			Message.send(channel,
-			{
-				event:		'init_error',
-				reason:		'missing publisher id'
-			});
+			Message.alert(channel, 'missing publisher id');
 
 			return false;
 		}
@@ -56,7 +52,7 @@
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
 		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.10;
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.1;
 		config.imp[0].instl = config.imp[0].instl || 0;
 		config.imp[0].secure = config.imp[0].secure || false;
 		config.tmax = config.tmax || 500;
@@ -95,7 +91,7 @@
 		}
 
 		if (debug)
-			send = function (data) { Message.send(channel, data); };
+			send = function (event, data) { Message.debug(channel, id, event, data); };
 		else
 			send = function () {};
 

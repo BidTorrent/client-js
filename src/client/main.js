@@ -118,17 +118,22 @@ bidTorrent = (function ()
 						if (message.origin !== parse.protocol + '//' + parse.hostname || message.data.channel !== channel)
 							return;
 
-/*						switch (message.type)
+						switch (message.data.type)
 						{
-							case 'debug':*/
+							case 'alert':
+								alert('[BidTorrent] ' + message.data.message);
+
+								break;
+
+							case 'debug':
 								if (debug !== undefined)
 								{
 									for (var i = 0; i < probes.length; ++i)
-										probes[i](debug, message.data.data);
+										probes[i](debug, message.data.auction, message.data.event, message.data.data);
 								}
-/*
+
 								break;
-						}*/
+						}
 					};
 				};
 

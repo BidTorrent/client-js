@@ -145,7 +145,7 @@
 	document.body.appendChild(debugCss);
 
 	// FIXME
-	parent.bidTorrent.connect(function (element, data)
+	parent.bidTorrent.connect(function (element, auction, event, data)
 	{
 		defer(function ()
 		{
@@ -154,7 +154,7 @@
 
 			container = $(element);
 
-			switch (data.event)
+			switch (event)
 			{
 				case 'init_error':
 					$('#' + data.container).css('visibility', 'hidden');

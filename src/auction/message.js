@@ -1,8 +1,18 @@
 
 var Message = {
-	send: function (channel, data)
+	alert: function (channel, message)
 	{
-		window.parent.postMessage({channel: channel, data: data}, document.location.href);
+		Message.send({channel: channel, type: 'alert', message: message});
+	},
+
+	debug: function (channel, auction, event, data)
+	{
+		Message.send({channel: channel, type: 'debug', auction: auction, event: event, data: data});
+	},
+
+	send: function (data)
+	{
+		window.parent.postMessage(data, document.location.href);
 	}
 };
 
