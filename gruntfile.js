@@ -53,7 +53,7 @@ module.exports = function (grunt)
 			}
 		},
 
-		watch: {
+		watchBackground: {
 			options: {
 				spawn: false
 			},
@@ -75,6 +75,10 @@ module.exports = function (grunt)
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
+	// Overloading
+	grunt.renameTask('watch', 'watchBackground');
+
 	// Default task(s)
 	grunt.registerTask('release', ['copy', 'browserify', 'less:production', 'uglify']);
+	grunt.registerTask('watch', ['copy', 'browserify', 'less:development', 'watchBackground']);
 };
