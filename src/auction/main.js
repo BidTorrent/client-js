@@ -38,9 +38,7 @@
 
 					debugId = debug ? index : undefined;
 
-					applyDefaultValue(configResult[0]);
-
-					if (!isConfigOK(configResult[0], debugId))
+					if (!processConfig(configResult[0], debugId))
 						return;
 
 					everythingLoaded(biddersResult[0], configResult[0], slots[0], debugId, statUrl);
@@ -154,61 +152,26 @@
 		return result;
 	}
 
-	var applyDefaultValue = function(config)
-	{
-		config.cur = config.cur || ['USD'];
-		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.01;
-		config.site = config.site || {};
-		config.site.domain = config.site.domain || 'bidtorrent.com';
-		config.tmax = config.tmax || 500;
-	}
-
-	var isConfigOK = function(config, debug)
+	var processConfig = function(config, debug)
 	{
 		if (!config.site || !config.site.publisher || config.site.publisher.id === undefined)
 		{
-			sendDebug(debug,
-			{
-				event:		'init_error',
-				reason:		'missing publisher id'
-			});
+			sendDebug(
+				debug,
+				{
+					event:		'init_error',
+					reason:		'missing publisher id'
+				});
 
 			return false;
 		}
 
-		if (!config.cur || config.cur.length === 0)
-		{
-			sendDebug(debug,
-			{
-				event:		'init_error',
-				reason:		'missing currency'
-			});
-
-			return false;
-		}
-
-		if (!config.imp || config.imp.length === 0 || config.imp[0].bidfloor === undefined)
-		{
-			sendDebug(debug,
-			{
-				event:		'init_error',
-				reason:		'missing impression bidfloor'
-			});
-
-			return false;
-		}
-
-		if (config.tmax === undefined)
-		{
-			sendDebug(debug,
-			{
-				event:		'init_error',
-				reason:		'missing timeout (tmax)'
-			});
-
-			return false;
-		}
+		config.cur = config.cur || ['USD'];
+		config.site = config.site || {};
+		config.site.domain = config.site.domain || 'bidtorrent.com';
+		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.01;
+		config.tmax = config.tmax || 500;
 
 		return true;
 	}
