@@ -12,7 +12,7 @@ var Message = {
 
 	send: function (data)
 	{
-		window.parent.postMessage(data, document.location.href);
+		window.parent.postMessage(data, '*');
 	}
 };
 

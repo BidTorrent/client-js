@@ -61,22 +61,19 @@
 
 	var everythingLoaded = function (bidders, config, channel, debug, statUrl)
 	{
+		var auction;
+		var id;
 		var send;
 
 		var makeGuid = function ()
 		{
-			function S4()
+			var S4 = function ()
 			{
-				return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-			}
+				return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1).toLowerCase();
+			};
 
-			return (S4() + S4() + "-" + S4() +
-				"-" + S4().substr(0,3) + "-" +
-				S4() + "-" + S4() + S4() + S4()).toLowerCase();
-		}
-
-		var auction;
-		var id;
+			return S4() + S4() + "-" + S4() + '-' + S4().substr(0, 3) + '-' + S4() + '-' + S4() + S4() + S4();
+		};
 
 		id = makeGuid();
 
@@ -87,7 +84,7 @@
 			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
 			request:	formatBidRequest(id, config)
-		}
+		};
 
 		if (debug)
 			send = function (event, data) { Message.debug(channel, id, event, data); };
