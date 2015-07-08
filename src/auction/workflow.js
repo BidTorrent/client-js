@@ -327,15 +327,12 @@ var Auction = {
 		var bid;
 		var bidder;
 		var first;
+		var parts;
 		var response;
 		var seatbid;
 		var status;
 
-		var parts = {
-			'a': auction.id + '-1',
-			'p': config.site.publisher.id,
-			'f': auction.config.imp[0].bidfloor
-		};
+		parts = {};
 
 		for (var i = 0; i < results.length; i++)
 		{
@@ -356,10 +353,14 @@ var Auction = {
 			if (!bid || !bid.ext || !bid.ext.signature || !bid.price)
 				continue;
 
+			parts['a'] = auction.id + '-' + bid.impid; // FIXME: doesn't work if we receive responses for different impression ids
 			parts['d[' + bidders[i].id + ']'] = bid.price + '-' + bid.ext.signature;
 		}
 
 		first = true;
+		parts['f'] = auction.config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
+		parts['p'] = config.site.publisher.id;
+
 		for (var key in parts)
 		{
 			statUrl = statUrl + (first ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(parts[key]);
