@@ -170,7 +170,9 @@
 		config.site = config.site || {};
 		config.site.domain = config.site.domain || 'bidtorrent.com';
 		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.01;
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.10;
+		config.imp[0].instl = config.imp[0].instl || 0;
+		config.imp[0].secure = config.imp[0].secure || false;
 		config.tmax = config.tmax || 500;
 
 		return true;
