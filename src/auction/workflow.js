@@ -403,7 +403,7 @@ var Auction = {
 		var status;
 
 		var parts = {
-			'a': auction.id,
+			'a': auction.id + '-1',
 			'p': config.site.publisher.id,
 			'f': auction.config.imp[0].bidfloor
 		};
