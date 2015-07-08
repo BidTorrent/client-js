@@ -110,7 +110,7 @@ var Auction = {
 		return true;
 	},
 
-	begin: function (auction)
+	begin: function (auction, debug)
 	{
 		var futures = [];
 
@@ -124,10 +124,16 @@ var Auction = {
 				futures.push(Future.make('filter', undefined));
 		}
 
+		debug({
+			event:		'init_valid',
+			auction:	auction.id,
+			bidders:	auction.bidders
+		});
+
 		return Future.bind.apply(null, futures);
 	},
 
-	end: function (auction, bidders, results, config, statUrl, sendDebug)
+	end: function (auction, bidders, results, config, statUrl, debug)
 	{
 		var bid;
 		var currentPrice;
@@ -147,8 +153,7 @@ var Auction = {
 
 			if (status === 'expire')
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -160,8 +165,7 @@ var Auction = {
 
 			if (status === 'filter')
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_filter'
@@ -173,8 +177,7 @@ var Auction = {
 			// FIXME: should not be reported as an error
 			if (status === 'pass')
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -186,8 +189,7 @@ var Auction = {
 
 			if (status === 'empty' || !response || !response.seatbid)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -199,8 +201,7 @@ var Auction = {
 
 			if (response.cur && response.cur !== auction.request.cur)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -214,8 +215,7 @@ var Auction = {
 
 			if (!seatbid || !seatbid.bid)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -229,8 +229,7 @@ var Auction = {
 
 			if (!bid || !bid.adm)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -242,8 +241,7 @@ var Auction = {
 
 			if (!bid.price)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -255,8 +253,7 @@ var Auction = {
 
 			if (!bid.ext || !bid.ext.signature)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -268,8 +265,7 @@ var Auction = {
 
 			if (bid.impid && bid.impid != auction.request.imp[0].id)
 			{
-				sendDebug(auction._debug,
-				{
+				debug({
 					auction:	auction.id,
 					bidder:		bidders[i].id,
 					event:		'bid_error',
@@ -291,8 +287,7 @@ var Auction = {
 
 				if (found)
 				{
-					sendDebug(auction._debug,
-					{
+					debug({
 						auction:	auction.id,
 						bidder:		bidders[i].id,
 						event:		'bid_error',
@@ -305,8 +300,7 @@ var Auction = {
 
 			currentPrice = bid.price;
 
-			sendDebug(auction._debug,
-			{
+			debug({
 				auction:	auction.id,
 				bidder:		bidders[i].id,
 				event:		'bid_valid',
@@ -334,8 +328,7 @@ var Auction = {
 
 		secondPrice += 0.01;
 
-		sendDebug(auction._debug,
-		{
+		debug({
 			event:		'end',
 			auction:	auction.id,
 			winner:		winnerBidder.id,

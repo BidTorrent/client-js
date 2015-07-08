@@ -8,13 +8,14 @@
 	var Auction = require('./workflow').Auction;
 	var Config = require('./config').Config;
 	var Future = require('./concurrent').Future;
+	var Message = require('./message').Message;
 	var Query = require('./http').Query;
 
 	var start = function (event)
 	{
 		var bidders = event.data.bidders;
+		var channel = event.data.channel;
 		var debug = event.data.debug;
-		var index = event.data.index;
 		var slots = event.data.slots;
 		var statUrl = event.data.statUrl;
 
@@ -28,26 +29,21 @@
 			{
 				var bidders;
 				var config;
-				var debugId;
 
 				if (!Query.isStatusValid(biddersResult[1]) ||
-					!Query.isStatusValid(configResult[1]))
+					!Query.isStatusValid(configResult[1]) || 
+					!processConfig(configResult[0], channel))
 					return;
 
-				debugId = debug ? index : undefined;
-
-				if (!processConfig(configResult[0], debugId))
-					return;
-
-				everythingLoaded(biddersResult[0], configResult[0], slots[0], debugId, statUrl);
+				everythingLoaded(biddersResult[0], configResult[0], slots[0], channel, debug, statUrl);
 			});
 	};
 
-	var processConfig = function (config, debug)
+	var processConfig = function (config, channel)
 	{
 		if (!config.site || !config.site.publisher || config.site.publisher.id === undefined)
 		{
-			sendDebug(debug,
+			Message.send(channel,
 			{
 				event:		'init_error',
 				reason:		'missing publisher id'
@@ -68,8 +64,10 @@
 		return true;
 	}
 
-	var everythingLoaded = function (bidders, config, slot, debug, statUrl)
+	var everythingLoaded = function (bidders, config, slot, channel, debug, statUrl)
 	{
+		var send;
+
 		var makeGuid = function ()
 		{
 			function S4()
@@ -89,26 +87,23 @@
 
 		auction =
 		{
-			request:	formatBidRequest(id, config, slot),
 			bidders:	bidders,
 			config:		config,
 			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
-			_debug:		debug
+			request:	formatBidRequest(id, config, slot)
 		}
 
-		sendDebug(auction._debug,
-		{
-			event:		'init_valid',
-			auction:	auction.id,
-			bidders:	bidders
-		});
+		if (debug)
+			send = function (data) { Message.send(channel, data); };
+		else
+			send = function () {};
 
 		Auction
-			.begin(auction)
+			.begin(auction, send)
 			.then(function ()
 			{
-				Auction.end(auction, bidders, arguments, config, statUrl, sendDebug);
+				Auction.end(auction, bidders, arguments, config, statUrl, send);
 			});
 	}
 
@@ -145,12 +140,6 @@
 		};
 
 		return auctionRequest;
-	};
-
-	var sendDebug = function (debug, data)
-	{
-		if (debug !== undefined)
-			window.parent.postMessage({data: data, id: debug}, document.location.href);
 	};
 
 	addEventListener('message', start, false);

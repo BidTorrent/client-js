@@ -25,6 +25,7 @@ bidTorrent = (function ()
 		{
 			var debug;
 			var iframe;
+			var listener;
 			var parse;
 			var slot;
 
@@ -65,16 +66,16 @@ bidTorrent = (function ()
 
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');
-				iframe.onload = (function (index, slot)
+				iframe.onload = (function (channel, slot)
 				{
 					return function ()
 					{
 						iframe.contentWindow.postMessage({
 							bidders:	init.bidders,
+							channel:	channel,
 							config:		init.config,
 							configUrl:	init.configUrl,
 							debug:		init.debug,
-							index:		index,
 							slots:		[{
 								floor:	slot.floor,
 								height:	slot.height,
@@ -105,19 +106,33 @@ bidTorrent = (function ()
 
 					parse = document.createElement('a');
 					parse.href = init.auction;
-
-					addEventListener('message', (function (debug, current)
-					{
-						return function (message)
-						{
-							if (message.origin === parse.protocol + '//' + parse.hostname && message.data.id === current)
-							{
-								for (var i = 0; i < probes.length; ++i)
-									probes[i](debug, message.data.data);
-							}
-						};
-					})(debug, i), true);
 				}
+				else
+					debug = undefined;
+
+				// Connect to messages from auction component
+				listener = function (channel, debug)
+				{
+					return function (message)
+					{
+						if (message.origin !== parse.protocol + '//' + parse.hostname || message.data.channel !== channel)
+							return;
+
+/*						switch (message.type)
+						{
+							case 'debug':*/
+								if (debug !== undefined)
+								{
+									for (var i = 0; i < probes.length; ++i)
+										probes[i](debug, message.data.data);
+								}
+/*
+								break;
+						}*/
+					};
+				};
+
+				addEventListener('message', listener(i, debug), true);
 			}
 		};
 

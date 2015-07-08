@@ -15,14 +15,18 @@ var Query = {
 			.text(url, data !== undefined ? JSON.stringify(data) : undefined)
 			.then(function (text, status)
 			{
+				var json;
+
 				try
 				{
-					future.signal(JSON.parse(text), status);
+					json = JSON.parse(text);
 				}
 				catch (e)
 				{
-					future.signal(undefined, status);
+					json = undefined;
 				}
+
+				future.signal(json, status);
 			});
 
 		return future;
