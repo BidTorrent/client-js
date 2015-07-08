@@ -41,7 +41,7 @@ bidTorrent = (function ()
 			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
 			init.configUrl = url(init.configUrl);
 			init.slots = init.slots || [];
-			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
+			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp');
 
 			// Start auctions on each configured slot
 			for (var i = 0; i < init.slots.length; ++i)
