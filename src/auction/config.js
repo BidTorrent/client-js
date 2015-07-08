@@ -30,6 +30,7 @@ var Config = {
 		{
 			result.site = {};
 			result.site.cat = configLocal.site.cat;
+			result.site.id = configLocal.site.id;
 			result.site.domain = configLocal.site.domain;
 			result.site.mobile = configLocal.site.mobile;
 
@@ -62,6 +63,9 @@ var Config = {
 
 			if (configRemote.site.domain !== undefined)
 				result.site.domain = configRemote.site.domain;
+
+			if (configRemote.site.id !== undefined)
+				result.site.id = configRemote.site.id;
 
 			if (configRemote.site.mobile !== undefined)
 				result.site.mobile = configRemote.site.mobile;
