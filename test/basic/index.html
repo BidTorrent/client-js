@@ -5,18 +5,12 @@
 	</head>
 	<body>
 		<div id="desktop_ad_top" style="width: 300px; height: 250px;"></div>
-		<script type="text/javascript" src="../../build/client.js"></script>
+		<script type="text/javascript" src="../../build/loader.js"></script>
 		<script type="text/javascript" src="../../build/debug.js"></script>
 		<script type="text/javascript">
 			bidTorrent({
-				auction:	'../../build/auction.html',
-				bidders:	'bidders.json',
-				config: {
-					imp: [{
-						id: "desktop_ad_top"
-					}],
-					passback: '<div><img src="http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg"></div>'
-				},
+				biddersUrl:	'bidders.json',
+				clientUrl:	'../../build/client.html',
 				configUrl:	'publisher.json',
 				debug:		true
 			});

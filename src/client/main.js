@@ -1,177 +1,126 @@
-
 /*
-** BidTorrent loader component.
+** BidTorrent auction component.
 ** copyright the BidTorrent team 2015
 */
-bidTorrent = (function ()
+
+(function ()
 {
-	var client;
-	var probes;
-	var url;
+	var Auction = require('./workflow').Auction;
+	var Message = require('./message').Message;
 
-	// BidTorrent JavaScript client
-	client = function (init)
+	var start = function (event)
 	{
-		var loader;
+		var bidders = event.data.bidders;
+		var channel = event.data.channel;
+		var config = event.data.config;
+		var debug = event.data.debug;
+		var statUrl = event.data.statUrl;
 
-		// Ensure required JavaScript features are supported
-		if ((typeof postMessage === 'undefined') ||
-		    (typeof XMLHttpRequest === 'undefined') ||
-		    (!('withCredentials' in new XMLHttpRequest()) && (typeof XDomainRequest === 'undefined')))
+		if (!processConfig(config, channel))
 			return;
 
-		// Create the actual loading function
-		loader = function ()
+		everythingLoaded(bidders, config, channel, debug, statUrl);
+	};
+
+	var processConfig = function (config, channel)
+	{
+		if (!config.site)
 		{
-			var debug;
-			var element;
-			var iframe;
-			var imp;
-			var listener;
-			var parse;
-			var slot;
+			Message.alert(channel, 'missing site');
 
-			// Populate initialization object with missing default value
-			init = init || {};
+			return false;
+		}
 
-			if (init.config === undefined)
+		if (!config.site.id)
+		{
+			Message.alert(channel, 'missing site id');
+
+			return false;
+		}
+
+		if (!config.site.publisher || config.site.publisher.id === undefined)
+		{
+			Message.alert(channel, 'missing publisher id');
+
+			return false;
+		}
+
+		config.cur = config.cur || ['USD'];
+		config.site = config.site || {};
+		config.site.domain = config.site.domain || 'bidtorrent.com';
+		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
+		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.1;
+		config.imp[0].instl = config.imp[0].instl || 0;
+		config.imp[0].secure = config.imp[0].secure || false;
+		config.tmax = config.tmax || 500;
+
+		return true;
+	}
+
+	var everythingLoaded = function (bidders, config, channel, debug, statUrl)
+	{
+		var auction;
+		var id;
+		var send;
+
+		var makeGuid = function ()
+		{
+			var S4 = function ()
 			{
-				console.error('[BidTorrent] no configuration object specified');
-				return;
-			}
+				return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1).toLowerCase();
+			};
 
-			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
-			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
-			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
-			init.passback = url(init.passback);
-			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
-
-			if (!init.config.imp || init.config.imp.length === 0)
-			{
-				console.error('[BidTorrent] at least one impression has to be specified');
-				return;
-			}
-
-			for (var i = 0; i < init.config.imp.length; ++i)
-			{
-				imp = init.config.imp[i];
-
-				if (!imp.id || typeof imp.id !== 'string')
-				{
-					console.error('[BidTorrent] impression #' + i + ' is invalid');
-					return;
-				}
-
-				element = document.getElementById(imp.id);
-
-				if (!element)
-				{
-					console.error('[BidTorrent] no DOM element found for id #' + imp.id);
-					return;
-				}
-
-				imp.banner = imp.banner || {};
-				imp.banner.h = imp.banner.h || element.offsetHeight;
-				imp.banner.w = imp.banner.w || element.offsetWidth;
-
-				// Create and append auction iframe
-				iframe = document.createElement('iframe');
-				iframe.onload = (function (channel)
-				{
-					return function ()
-					{
-						iframe.contentWindow.postMessage({
-							bidders:	init.bidders,
-							channel:	channel,
-							config:		init.config,
-							configUrl:	init.configUrl,
-							debug:		init.debug,
-							statUrl: 	init.statUrl
-						}, '*');
-					};
-				})(i);
-
-				iframe.frameBorder = 0;
-				iframe.height = imp.banner.h + 'px';
-				iframe.scrolling = 'no';
-				iframe.seamless = 'seamless';
-				iframe.width = imp.banner.w + 'px';
-				iframe.src = init.auction;
-
-				element.appendChild(iframe);
-
-				// Create and append debug mode iframe
-				if (init.debug)
-				{
-					debug = document.createElement('div');
-					debug.className = 'bidtorrent-debug';
-					debug.style.width = imp.banner.w + 'px';
-
-					element.appendChild(debug);
-
-					parse = document.createElement('a');
-					parse.href = init.auction;
-				}
-				else
-					debug = undefined;
-
-				// Connect to messages from auction component
-				listener = function (channel, debug)
-				{
-					return function (message)
-					{
-						if (message.origin !== parse.protocol + '//' + parse.hostname || message.data.channel !== channel)
-							return;
-
-						switch (message.data.type)
-						{
-							case 'alert':
-								if (debug !== undefined)
-									console.error('[BidTorrent] ' + message.data.message);
-
-								break;
-
-							case 'debug':
-								if (debug !== undefined)
-								{
-									for (var i = 0; i < probes.length; ++i)
-										probes[i](debug, message.data.auction, message.data.event, message.data.data);
-								}
-
-								break;
-						}
-					};
-				};
-
-				addEventListener('message', listener(i, debug), true);
-			}
+			return S4() + S4() + "-" + S4() + '-' + S4().substr(0, 3) + '-' + S4() + '-' + S4() + S4() + S4();
 		};
 
-		// Execute loader callback when page is loaded or synchronously
-		if (document.readyState === 'complete' || document.readyState === 'loaded')
-			loader();
+		id = makeGuid();
+
+		auction =
+		{
+			bidders:	bidders,
+			config:		config,
+			expire:		new Date().getTime() + config.tmax,			
+			id:			id,
+			request:	formatBidRequest(id, config)
+		};
+
+		if (debug)
+			send = function (event, data) { Message.debug(channel, id, event, data); };
 		else
-			document.addEventListener('DOMContentLoaded', loader, false);
-	};
+			send = function () {};
 
-	// Parse relative into absolute URL
-	url = function (relative)
+		Auction
+			.begin(auction, send)
+			.then(function ()
+			{
+				Auction.end(auction, bidders, arguments, config, statUrl, send);
+			});
+	}
+
+	var formatBidRequest = function (id, config)
 	{
-		var parse = document.createElement('a');
+		var auctionRequest;
+		var impression;
 
-		parse.href = relative;
+		auctionRequest =
+		{
+			badv: config.badv,
+			bcat: config.bcat,
+			cur: config.cur,
+			device: {
+				js: 1,
+				language: navigator.language,
+				ua: navigator.userAgent
+			},
+			id: id,
+			imp: config.imp,
+			site: config.site,
+			tmax: config.tmax,
+			user: {}
+		};
 
-		return parse.href;
+		return auctionRequest;
 	};
 
-	// BidTorrent JavaScript debug handler
-	client.connect = function (probe)
-	{
-		probes.push(probe);
-	};
-
-	// Probes
-	probes = [];
-
-	return client;
+	addEventListener('message', start, false);
 })();

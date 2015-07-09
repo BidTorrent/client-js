@@ -15,6 +15,9 @@
 			"country": "FR"
 		}
 	},
+	"imp": [{
+		"id": "desktop_ad_top"
+	}],
 	"badv": [
 		"porn.com",
 		"badcontent2.net",
@@ -26,5 +29,6 @@
 		"IAB7-28"
 	],
 	"cur": "USD",
-	"tmax": 500
+	"tmax": 500,
+	"passback": "<div><img src=\"http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg\"></div>"
 }

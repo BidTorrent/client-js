@@ -124,7 +124,12 @@ var Config = {
 				}
 
 				if (resImpId === result.imp.length)
-					continue;
+				{
+					resImp = {};
+					resImp.id = impRemote.id;
+
+					result.imp.push(resImp);
+				}
 
 				if (impRemote.bidfloor !== undefined)
 					resImp.bidfloor = impRemote.bidfloor;

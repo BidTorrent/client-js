@@ -7,9 +7,9 @@ module.exports = function (grunt)
 		browserify: {
 			build: {
 				files: [
-					{src: 'src/auction/**/*.js', dest: 'build/auction.js'},
 					{src: 'src/client/**/*.js', dest: 'build/client.js'},
-					{src: 'src/debug/**/*.js', dest: 'build/debug.js'}
+					{src: 'src/debug/**/*.js', dest: 'build/debug.js'},
+					{src: 'src/loader/**/*.js', dest: 'build/loader.js'}
 				]
 			}
 		},
@@ -17,7 +17,7 @@ module.exports = function (grunt)
 		copy: {
 			build: {
 				files: [
-					{src: 'src/auction/auction.html', dest: 'build/auction.html'}
+					{src: 'src/client/client.html', dest: 'build/client.html'}
 				]
 			}
 		},
@@ -45,9 +45,9 @@ module.exports = function (grunt)
 			},
 			build: {
 				files: [
-					{src: 'build/auction.js', dest: 'build/auction.js'},
 					{src: 'build/client.js', dest: 'build/client.js'},
-					{src: 'build/debug.js', dest: 'build/debug.js'}
+					{src: 'build/debug.js', dest: 'build/debug.js'},
+					{src: 'build/loader.js', dest: 'build/loader.js'}
 				],
 				sourceMap: true
 			}

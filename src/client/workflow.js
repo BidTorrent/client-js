@@ -1,7 +1,7 @@
 
 var Element = require('./dom').Element;
-var Future = require('./concurrent').Future;
-var Query = require('./http').Query;
+var Future = require('../concurrent').Future;
+var Query = require('../http').Query;
 
 var Auction = {
 	acceptBidder: function (bidder, auction)
