@@ -40,7 +40,21 @@
 
 	var processConfig = function (config, channel)
 	{
-		if (!config.site || !config.site.publisher || config.site.publisher.id === undefined)
+		if (!config.site)
+		{
+			Message.alert(channel, 'missing site');
+
+			return false;
+		}
+
+		if (!config.site.id)
+		{
+			Message.alert(channel, 'missing site id');
+
+			return false;
+		}
+
+		if (!config.site.publisher || config.site.publisher.id === undefined)
 		{
 			Message.alert(channel, 'missing publisher id');
 
