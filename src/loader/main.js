@@ -29,6 +29,10 @@ bidTorrent = (function ()
 		{
 			// Populate initialization object with missing default value
 			init = init || {};
+
+			if (typeof init.configUrl === 'number')
+				init.configUrl = 'http://www.bidtorrent.io/api/publishers/' + init.configUrl;
+
 			init.clientUrl = url(init.clientUrl || 'http://bidtorrent.io/client.html');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
 			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp');
