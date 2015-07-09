@@ -24,7 +24,9 @@ bidTorrent = (function ()
 		loader = function ()
 		{
 			var debug;
+			var element;
 			var iframe;
+			var imp;
 			var listener;
 			var parse;
 			var slot;
@@ -34,38 +36,36 @@ bidTorrent = (function ()
 
 			if (init.config === undefined)
 			{
-				console.error('[bidtorrent] no configuration object specified');
+				console.error('[BidTorrent] no configuration object specified');
 				return;
 			}
 
 			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
 			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
-			init.configUrl = url(init.configUrl);
+			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
 			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
 
-			if (init.config.imp === undefined || init.config.imp.length === 0)
+			if (!init.config.imp || init.config.imp.length === 0)
 			{
-				console.error('[bidtorrent] At least one impression has to be specified');
+				console.error('[BidTorrent] at least one impression has to be specified');
 				return;
 			}
 
 			for (var i = 0; i < init.config.imp.length; ++i)
 			{
-				var element;
-				var imp;
-
 				imp = init.config.imp[i];
 
-				if (imp.id === undefined || typeof imp.id !== 'string')
+				if (!imp.id || typeof imp.id !== 'string')
 				{
-					console.error('[bidtorrent] impression #' + i + ' is invalid');
+					console.error('[BidTorrent] impression #' + i + ' is invalid');
 					return;
 				}
 
 				element = document.getElementById(imp.id);
+
 				if (!element)
 				{
-					console.error('[bidtorrent] no element found for ' + imp.id);
+					console.error('[BidTorrent] no DOM element found for id #' + imp.id);
 					return;
 				}
 
@@ -128,7 +128,8 @@ bidTorrent = (function ()
 						switch (message.data.type)
 						{
 							case 'alert':
-								alert('[BidTorrent] ' + message.data.message);
+								if (debug !== undefined)
+									console.error('[BidTorrent] ' + message.data.message);
 
 								break;
 
