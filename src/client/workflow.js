@@ -297,7 +297,7 @@ var Auction = {
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
 		else
-			Element.html(creative, auction.config.passback || '');
+			Element.html(creative, auction.config.imp[0].passback || '');
 	},
 
 	send: function (auction, bidder)
