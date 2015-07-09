@@ -60,7 +60,7 @@ bidTorrent = (function ()
 
 					if (!Query.isStatusValid(biddersResult[1]) || !bidders)
 					{
-						if (config.debug)
+						if (init.debug)
 							console.error('[BidTorrent] could not read bidders list');
 
 						return;
@@ -68,7 +68,7 @@ bidTorrent = (function ()
 
 					if (!Query.isStatusValid(configResult[1]) || !config)
 					{
-						if (config.debug)
+						if (init.debug)
 							console.error('[BidTorrent] could not read configuration');
 
 						return;
@@ -76,7 +76,7 @@ bidTorrent = (function ()
 
 					if (!config.imp || config.imp.length === 0)
 					{
-						if (config.debug)
+						if (init.debug)
 							console.error('[BidTorrent] at least one impression has to be specified');
 
 						return;
@@ -88,7 +88,7 @@ bidTorrent = (function ()
 
 						if (!imp.id || typeof imp.id !== 'string')
 						{
-							if (config.debug)
+							if (init.debug)
 								console.error('[BidTorrent] missing DOM element id for impression #' + i);
 
 							return;
@@ -98,7 +98,7 @@ bidTorrent = (function ()
 
 						if (!element)
 						{
-							if (config.debug)
+							if (init.debug)
 								console.error('[BidTorrent] no DOM element found for id #' + imp.id);
 
 							return;
