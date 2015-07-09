@@ -43,6 +43,7 @@ bidTorrent = (function ()
 			init.auction = url(init.auction || 'http://bidtorrent.io/auction.html');
 			init.bidders = url(init.bidders || 'http://www.bidtorrent.io/api/bidders');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
+			init.passback = url(init.passback);
 			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp.php');
 
 			if (!init.config.imp || init.config.imp.length === 0)
@@ -69,12 +70,9 @@ bidTorrent = (function ()
 					return;
 				}
 
-				if (imp.banner === undefined || imp.banner.w === undefined || imp.banner.h === undefined)
-				{
-					imp.banner = imp.banner || {};
-					imp.banner.h = imp.banner.h || element.offsetHeight;
-					imp.banner.w = imp.banner.w || element.offsetWidth;
-				}
+				imp.banner = imp.banner || {};
+				imp.banner.h = imp.banner.h || element.offsetHeight;
+				imp.banner.w = imp.banner.w || element.offsetWidth;
 
 				// Create and append auction iframe
 				iframe = document.createElement('iframe');

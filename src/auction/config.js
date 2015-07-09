@@ -46,6 +46,7 @@ var Config = {
 		result.badv = configLocal.badv;
 		result.bcat = configLocal.bcat;
 		result.cur = configLocal.cur;
+		result.passback = configLocal.passback;
 		result.tmax = configLocal.tmax;
 
 		if (configLocal.imp !== undefined)
@@ -93,6 +94,9 @@ var Config = {
 
 		if (configRemote.cur !== undefined)
 			result.cur = configRemote.cur;
+
+		if (configRemote.passback !== undefined)
+			result.passback = configRemote.passback;
 
 		if (configRemote.tmax !== undefined)
 			result.tmax = configRemote.tmax;
