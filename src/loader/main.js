@@ -86,7 +86,7 @@ bidTorrent = (function ()
 					{
 						imp = config.imp[i];
 
-						if (!imp.id || typeof imp.id !== 'string')
+						if (!imp.id)
 						{
 							if (init.debug)
 								console.error('[BidTorrent] missing DOM element id for impression #' + i);

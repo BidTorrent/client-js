@@ -146,7 +146,7 @@ var Auction = {
 	{
 		var bid;
 		var creative;
-		var found;
+		var pass;
 		var seatbid;
 		var secondPrice;
 		var winnerBid;
@@ -188,13 +188,23 @@ var Auction = {
 				continue;
 			}
 
-			if (response.cur && response.cur !== auction.request.cur)
+			// Check currency against allowed ones
+			if (response.cur)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency'});
+				pass = false;
 
-				continue;
+				for (var j = 0; !pass && j < auction.request.cur.length; ++j)
+					pass = response.cur === auction.request.cur[j];
+
+				if (!pass)
+				{
+					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency "' + response.cur + '"'});
+
+					continue;
+				}
 			}
 
+			// Find first seat if any
 			seatbid = response.seatbid[0];
 
 			if (!seatbid || !seatbid.bid)
@@ -204,6 +214,7 @@ var Auction = {
 				continue;
 			}
 
+			// Find first bid if any
 			bid = seatbid.bid[0];
 
 			if (!bid || !bid.adm)
@@ -236,15 +247,15 @@ var Auction = {
 
 			if (bid.adomain && bid.adomain.length > 0 && auction.request.badv)
 			{
-				found = false;
+				pass = true;
 
-				for (var j = 0; !found && j < auction.request.badv.length; ++j)
+				for (var j = 0; pass && j < auction.request.badv.length; ++j)
 				{
-					for (var k = 0; !found && k < bid.adomain.length; ++k)
-						found = auction.request.badv[j] === bid.adomain[k];
+					for (var k = 0; pass && k < bid.adomain.length; ++k)
+						pass = auction.request.badv[j] !== bid.adomain[k];
 				}
 
-				if (found)
+				if (!pass)
 				{
 					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid advertiser domain'});
 
