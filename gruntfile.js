@@ -8,7 +8,8 @@ module.exports = function (grunt)
 			build: {
 				files: [
 					{src: 'src/client/**/*.js', dest: 'build/client.js'},
-					{src: 'src/debug/**/*.js', dest: 'build/debug.js'},
+					{src: 'src/debug-log/**/*.js', dest: 'build/debug-log.js'},
+					{src: 'src/debug-print/**/*.js', dest: 'build/debug-print.js'},
 					{src: 'src/loader/**/*.js', dest: 'build/loader.js'}
 				]
 			}
@@ -25,7 +26,7 @@ module.exports = function (grunt)
 		less: {
 			development: {
 				files: [
-					{src: 'src/debug/debug.less', dest: 'build/debug.css'}
+					{src: 'src/debug-print/debug.less', dest: 'build/debug-print.css'}
 				]
 			},
 			production: {
@@ -34,7 +35,7 @@ module.exports = function (grunt)
 					compress: true
 				},
 				files: [
-					{src: 'src/debug/debug.less', dest: 'build/debug.css'}
+					{src: 'src/debug-print/debug.less', dest: 'build/debug-print.css'}
 				]
 			}
 		},
@@ -46,7 +47,8 @@ module.exports = function (grunt)
 			build: {
 				files: [
 					{src: 'build/client.js', dest: 'build/client.js'},
-					{src: 'build/debug.js', dest: 'build/debug.js'},
+					{src: 'build/debug-log.js', dest: 'build/debug-log.js'},
+					{src: 'build/debug-print.js', dest: 'build/debug-print.js'},
 					{src: 'build/loader.js', dest: 'build/loader.js'}
 				],
 				sourceMap: true

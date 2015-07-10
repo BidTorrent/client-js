@@ -139,13 +139,13 @@
 	++defer_wait;
 	var debugCss = document.createElement('link');
 	debugCss.onload = defer_signal;
-	debugCss.href = 'http://bidtorrent.io/debug.css';
+	debugCss.href = 'http://bidtorrent.io/debug-print.css';
 	debugCss.rel = 'stylesheet';
 	debugCss.type = 'text/css';
 	document.body.appendChild(debugCss);
 
 	// FIXME
-	parent.bidTorrent.connect(function (element, auction, event, data)
+	parent.bidTorrent.connect(function (type, element, auction, data)
 	{
 		defer(function ()
 		{
@@ -154,8 +154,13 @@
 
 			container = $(element);
 
-			switch (event)
+			switch (type)
 			{
+				case 'alert':
+					console.error('[BidTorrent] ' + data);
+
+					break;
+
 				case 'init_error':
 					$('#' + data.container).css('visibility', 'hidden');
 
@@ -264,7 +269,7 @@
 					break;
 
 				default:
-					alert('Unexpected debug event!');
+					alert('Unexpected debug event type!');
 
 					break;
 			}

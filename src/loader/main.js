@@ -35,7 +35,7 @@ bidTorrent = (function ()
 
 			init.clientUrl = url(init.clientUrl || 'http://bidtorrent.io/client.html');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
-			init.impUrl = url(init.impUrl || 'http://stats.bidtorrent.io/imp');
+			init.impUrl = url(init.impUrl || 'http://log.bidtorrent.io/imp');
 
 			// Load bidders list and configuration, continue when available
 			Future
@@ -156,19 +156,8 @@ bidTorrent = (function ()
 									if (message.origin !== parse.protocol + '//' + parse.hostname || message.data.channel !== channel)
 										return;
 
-									switch (message.data.type)
-									{
-										case 'alert':
-											console.error('[BidTorrent] ' + message.data.message);
-
-											break;
-
-										case 'debug':
-											for (var i = 0; i < probes.length; ++i)
-												probes[i](debug, message.data.auction, message.data.event, message.data.data);
-
-											break;
-									}
+									for (var i = 0; i < probes.length; ++i)
+										probes[i](message.data.type, debug, message.data.auction, message.data.data);
 								};
 							};
 

@@ -7,7 +7,7 @@ var Message = {
 
 	debug: function (channel, auction, event, data)
 	{
-		Message.send({channel: channel, type: 'debug', auction: auction, event: event, data: data});
+		Message.send({channel: channel, type: event, auction: auction, data: data});
 	},
 
 	send: function (data)

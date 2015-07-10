@@ -1,5 +1,5 @@
 
-var Element = require('./dom').Element;
+var Element = require('../dom').Element;
 var Future = require('../concurrent').Future;
 var Query = require('../http').Query;
 
