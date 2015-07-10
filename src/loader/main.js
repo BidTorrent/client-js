@@ -5,7 +5,7 @@
 */
 bidTorrent = (function ()
 {
-	var Config = require('../config').Config;
+	var Config = require('./config').Config;
 	var Future = require('../concurrent').Future;
 	var Query = require('../http').Query;
 
@@ -33,6 +33,7 @@ bidTorrent = (function ()
 			if (typeof init.configUrl === 'number')
 				init.configUrl = 'http://www.bidtorrent.io/api/publishers/' + init.configUrl;
 
+			init.biddersUrl = url(init.biddersUrl || 'http://www.bidtorrent.io/api/bidders');
 			init.clientUrl = url(init.clientUrl || 'http://bidtorrent.io/client.html');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
 			init.impUrl = url(init.impUrl || 'http://log.bidtorrent.io/imp');
@@ -41,7 +42,7 @@ bidTorrent = (function ()
 			Future
 				.bind
 				(
-					init.bidders ? Future.make(init.bidders, 200) : Query.json(init.biddersUrl || 'http://www.bidtorrent.io/api/bidders'),
+					init.bidders ? Future.make(init.bidders, 200) : Query.json(init.biddersUrl + (init.biddersUrl.indexOf('?') === -1 ? '?' : '&') + document.location.host),
 					Config.fetch(init.configUrl, init.config)
 				)
 				.then(function (biddersResult, configResult)

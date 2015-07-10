@@ -1,5 +1,5 @@
 
-var Query = require('./http').Query;
+var Query = require('../http').Query;
 
 var Config = {
 	fetch: function (configUrl, configLocal)
