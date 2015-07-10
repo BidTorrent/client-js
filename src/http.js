@@ -1,7 +1,7 @@
 
 var Future = require('./future').Future;
 
-var Query = {
+var HTTP = {
 	isStatusValid: function (status)
 	{
 		return (status >= 200 && status < 300) || status === 0;
@@ -11,7 +11,7 @@ var Query = {
 	{
 		var future = new Future();
 
-		Query
+		HTTP
 			.text(url, data !== undefined ? JSON.stringify(data) : undefined)
 			.then(function (text, status)
 			{
@@ -71,4 +71,4 @@ var Query = {
 };
 
 // Module exports
-exports.Query = Query;
+exports.HTTP = HTTP;
