@@ -47,15 +47,23 @@ var Query = {
 				future.signal(xhr.responseText, xhr.status);
 		};
 
-		if (data !== undefined)
+		try
 		{
-			xhr.open('POST', url, true);
-			xhr.send(data);
+			if (data !== undefined)
+			{
+				xhr.open('POST', url, true);
+				xhr.send(data);
+			}
+			else
+			{
+				xhr.open('GET', url, true);
+				xhr.send();
+			}
 		}
-		else
+		catch (e)
 		{
-			xhr.open('GET', url, true);
-			xhr.send();
+			// Simulate proxy error when request is forbidden (e.g. ad blocker)
+			future.signal(undefined, 502);
 		}
 
 		return future;

@@ -188,6 +188,13 @@ var Auction = {
 				continue;
 			}
 
+			if (status !== 'take')
+			{
+				debug('bid_error', {bidder: bidders[i].id, reason: 'error ' + response});
+
+				continue;
+			}
+
 			// Check currency against allowed ones
 			if (response.cur)
 			{
@@ -317,6 +324,9 @@ var Auction = {
 			{
 				if (status === 408 || new Date().getTime() >= auction.timeout)
 					return ['expire', undefined];
+
+				if (status >= 400 && status < 600)
+					return ['error', status];
 
 				if (status === 204)
 					return ['pass', undefined];
