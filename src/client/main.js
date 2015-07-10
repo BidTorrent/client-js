@@ -14,12 +14,12 @@
 		var channel = event.data.channel;
 		var config = event.data.config;
 		var debug = event.data.debug;
-		var statUrl = event.data.statUrl;
+		var impUrl = event.data.impUrl;
 
 		if (!processConfig(config, channel))
 			return;
 
-		everythingLoaded(bidders, config, channel, debug, statUrl);
+		everythingLoaded(bidders, config, channel, debug, impUrl);
 	};
 
 	var processConfig = function (config, channel)
@@ -57,7 +57,7 @@
 		return true;
 	}
 
-	var everythingLoaded = function (bidders, config, channel, debug, statUrl)
+	var everythingLoaded = function (bidders, config, channel, debug, impUrl)
 	{
 		var auction;
 		var id;
@@ -93,7 +93,7 @@
 			.begin(auction, send)
 			.then(function ()
 			{
-				Auction.end(auction, bidders, arguments, config, statUrl, send);
+				Auction.end(auction, bidders, arguments, config, impUrl, send);
 			});
 	}
 

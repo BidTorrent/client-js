@@ -35,7 +35,7 @@ bidTorrent = (function ()
 
 			init.clientUrl = url(init.clientUrl || 'http://bidtorrent.io/client.html');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
-			init.statUrl = url(init.statUrl || 'http://stats.bidtorrent.io/imp');
+			init.impUrl = url(init.impUrl || 'http://stats.bidtorrent.io/imp');
 
 			// Load bidders list and configuration, continue when available
 			Future
@@ -122,7 +122,7 @@ bidTorrent = (function ()
 									channel:	channel,
 									config:		config,
 									debug:		init.debug,
-									statUrl: 	init.statUrl
+									impUrl: 	init.impUrl
 								}, '*');
 							};
 						})(i);

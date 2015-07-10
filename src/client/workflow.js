@@ -142,7 +142,7 @@ var Auction = {
 		return Future.bind.apply(null, futures);
 	},
 
-	end: function (auction, bidders, results, config, statUrl, debug)
+	end: function (auction, bidders, results, config, impUrl, debug)
 	{
 		var bid;
 		var creative;
@@ -291,8 +291,8 @@ var Auction = {
 			if (winnerBid.nurl)
 				Element.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
 
-			if (statUrl)
-				Element.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, statUrl));
+			if (impUrl)
+				Element.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, impUrl));
 
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
@@ -331,7 +331,7 @@ var Auction = {
 	/*
 	* Renders an impression pixel in the bottom of the ad
 	*/
-	renderImpressionPixel: function (config, auction, bidders, results, statUrl)
+	renderImpressionPixel: function (config, auction, bidders, results, impUrl)
 	{
 		var bid;
 		var bidder;
@@ -372,11 +372,11 @@ var Auction = {
 
 		for (var key in parts)
 		{
-			statUrl = statUrl + (first ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(parts[key]);
+			impUrl = impUrl + (first ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(parts[key]);
 			first = false;
 		}
 
-		return statUrl;
+		return impUrl;
 	}
 };
 
