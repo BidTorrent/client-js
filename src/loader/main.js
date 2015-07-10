@@ -6,8 +6,8 @@
 bidTorrent = (function ()
 {
 	var Config = require('./config').Config;
-	var Future = require('../concurrent').Future;
-	var Query = require('../http').Query;
+	var Future = require('../future').Future;
+	var HTTP = require('../http').HTTP;
 
 	var loader;
 	var probes;
@@ -42,7 +42,7 @@ bidTorrent = (function ()
 			Future
 				.bind
 				(
-					init.bidders ? Future.make(init.bidders, 200) : Query.json(init.biddersUrl + (init.biddersUrl.indexOf('?') === -1 ? '?' : '&') + document.location.host),
+					init.bidders ? Future.make(init.bidders, 200) : HTTP.json(init.biddersUrl + (init.biddersUrl.indexOf('?') === -1 ? '?' : '&') + document.location.host),
 					Config.fetch(init.configUrl, init.config)
 				)
 				.then(function (biddersResult, configResult)
@@ -59,7 +59,7 @@ bidTorrent = (function ()
 					bidders = biddersResult[0];
 					config = configResult[0];
 
-					if (!Query.isStatusValid(biddersResult[1]) || !bidders)
+					if (!HTTP.isStatusValid(biddersResult[1]) || !bidders)
 					{
 						if (init.debug)
 							console.error('[BidTorrent] could not read bidders list');
@@ -67,7 +67,7 @@ bidTorrent = (function ()
 						return;
 					}
 
-					if (!Query.isStatusValid(configResult[1]) || !config)
+					if (!HTTP.isStatusValid(configResult[1]) || !config)
 					{
 						if (init.debug)
 							console.error('[BidTorrent] could not read configuration');

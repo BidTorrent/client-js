@@ -1,11 +1,11 @@
 
-var Element = {
+var DOM = {
 	html: function (node, content)
 	{
 		node.innerHTML = content;
 
 		if (node.parentNode)
-			Element.triggerJS(node.parentNode);
+			DOM.triggerJS(node.parentNode);
 
 		return node;
 	},
@@ -84,4 +84,4 @@ var Element = {
 };
 
 // Module exports
-exports.Element = Element;
+exports.DOM = DOM;

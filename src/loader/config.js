@@ -1,5 +1,6 @@
 
-var Query = require('../http').Query;
+var Future = require('../future').Future;
+var HTTP = require('../http').HTTP;
 
 var Config = {
 	fetch: function (configUrl, configLocal)
@@ -9,11 +10,11 @@ var Config = {
 		if (configUrl === undefined)
 			return Future.make([configLocal, 200]); // TODO: replace this hack
 
-		return Query
+		return HTTP
 			.json(configUrl)
 			.chain(function (configRemote, status)
 			{
-				if (!Query.isStatusValid(status) || !configRemote)
+				if (!HTTP.isStatusValid(status) || !configRemote)
 					return [configLocal, 200];
 
 				return [Config.merge(configRemote, configLocal), 200];

@@ -1,5 +1,5 @@
 
-var Future = require('./concurrent').Future;
+var Future = require('./future').Future;
 
 var Query = {
 	isStatusValid: function (status)

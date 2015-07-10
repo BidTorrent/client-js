@@ -1,7 +1,7 @@
 
-var Element = require('../dom').Element;
-var Future = require('../concurrent').Future;
-var Query = require('../http').Query;
+var DOM = require('../dom').DOM;
+var Future = require('../future').Future;
+var HTTP = require('../http').HTTP;
 
 var Auction = {
 	acceptBidder: function (bidder, auction)
@@ -293,18 +293,18 @@ var Auction = {
 		{
 			secondPrice += 0.01;
 
-			Element.html(creative, Auction.applyMacros(winnerBid.adm, auction, secondPrice));
+			DOM.html(creative, Auction.applyMacros(winnerBid.adm, auction, secondPrice));
 
 			if (winnerBid.nurl)
-				Element.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
+				DOM.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
 
 			if (impUrl)
-				Element.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, impUrl));
+				DOM.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, impUrl));
 
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
 		else
-			Element.html(creative, auction.config.imp[0].passback || '');
+			DOM.html(creative, auction.config.imp[0].passback || '');
 	},
 
 	send: function (auction, bidder)
@@ -319,7 +319,7 @@ var Auction = {
 
 		// Wrap either actual bidder response or timeout
 		return Future
-			.first(Query.json(bidder.bid_ep, auction.request), timeout)
+			.first(HTTP.json(bidder.bid_ep, auction.request), timeout)
 			.chain(function (response, status)
 			{
 				if (status === 408 || new Date().getTime() >= auction.timeout)
