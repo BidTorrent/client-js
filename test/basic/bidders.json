@@ -2,30 +2,34 @@
 	{
 		"id": 1,
 		"bid_ep": "http://bt.criteo.com/criteoBid.php",
+		"key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCVVXAD23ntPq0hQGg7XOoKygAZ\n0vvAmRBKbrLdabPGy+tNcP/K6ssZvUTv6WoQiZ95p9ypDO+iHzTGEx/p4PGN/pOr\ndyJHrcky7A/bsUWCL170yozgp56GvSuxSgLfeZihuavqYduo47zzjQZIkqA74nh4\npFQ2bVTebHayrj0vBQIDAQAB\n-----END PUBLIC KEY-----",
 		"name": "Criteo"
 	},
 	{
 		"id": 2,
-		"bid_ep": "http://test.bidtorrent.io/testBid.php",
-        "filters" : {
-            "sampling": 1.00,
-            "pub_ctry": ["FR", "US"],
-            "pub_ctry_wl": true,
-            "user_lang": ["EU-us"],
-            "user_lang_wl": true,
-            "cat": ["IAB1-4"],
-            "pub": ["pr0n.com"]
-        },
+		"bid_ep": "http://bt.criteo.com/testBid.php",
+		"filters" : {
+			"sampling": 1.00,
+			"pub_ctry": ["FR", "US"],
+			"pub_ctry_wl": true,
+			"user_lang": ["EU-us"],
+			"user_lang_wl": true,
+			"cat": ["IAB1-4"],
+			"pub": ["pr0n.com"]
+		},
+		"key": "-----BEGIN PUBLIC KEY-----\nMIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHi9N1gQ3d5nhC2Ia3cR9Fj5YtAG\nsOL/E+Mczj++o2ukPZHK/TVnaw2UHuAnTKECG7XU8gNbo1Fg6bp3PlbkIm97I9d/\nSy1+ujd2z4V0D6uzXxomahc4N96jsTN2aBgMO09b/Xf/dRM0lY6aAymXwCzdXy8r\n55iEMLyDLx2Ng521AgMBAAE=\n-----END PUBLIC KEY-----",
 		"name": "Test #2"
 	},
 	{
 		"id": 3,
-		"bid_ep": "http://test.bidtorrent.io/testBid.php",
-		"name": "Test #3"
+		"bid_ep": "http://bt.criteo.com/testBid.php",
+		"name": "Test #3",
+		"key": "-----BEGIN PUBLIC KEY-----\nMIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHi9N1gQ3d5nhC2Ia3cR9Fj5YtAG\nsOL/E+Mczj++o2ukPZHK/TVnaw2UHuAnTKECG7XU8gNbo1Fg6bp3PlbkIm97I9d/\nSy1+ujd2z4V0D6uzXxomahc4N96jsTN2aBgMO09b/Xf/dRM0lY6aAymXwCzdXy8r\n55iEMLyDLx2Ng521AgMBAAE=\n-----END PUBLIC KEY-----"
 	},
 	{
 		"id": 4,
-		"bid_ep": "http://test.bidtorrent.io/testBid.php",
-		"name": "Test #4"
+		"bid_ep": "http://bt.criteo.com/testBid.php",
+		"name": "Test #4",
+		"key": "-----BEGIN PUBLIC KEY-----\nMIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgHi9N1gQ3d5nhC2Ia3cR9Fj5YtAG\nsOL/E+Mczj++o2ukPZHK/TVnaw2UHuAnTKECG7XU8gNbo1Fg6bp3PlbkIm97I9d/\nSy1+ujd2z4V0D6uzXxomahc4N96jsTN2aBgMO09b/Xf/dRM0lY6aAymXwCzdXy8r\n55iEMLyDLx2Ng521AgMBAAE=\n-----END PUBLIC KEY-----"
 	}
 ]

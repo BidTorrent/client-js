@@ -2,6 +2,7 @@
 var DOM = require('../dom').DOM;
 var Future = require('../future').Future;
 var HTTP = require('../http').HTTP;
+var Signature = require('./signature').Signature;
 
 var Auction = {
 	acceptBidder: function (bidder, auction)
@@ -9,6 +10,9 @@ var Auction = {
 		var filters;
 
 		if (bidder.id === undefined)
+			return false;
+
+		if (bidder.key === undefined)
 			return false;
 
 		if (!bidder.bid_ep)
@@ -268,6 +272,13 @@ var Auction = {
 
 					continue;
 				}
+			}
+
+			if (!Signature.check(bid.price, auction.request.id + '-' + auction.config.imp[0].id, auction.config.site.publisher.id, auction.config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
+			{
+				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
+
+				continue;
 			}
 
 			debug('bid_valid', {bidder: bidders[i].id, price: bid.price});
