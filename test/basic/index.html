@@ -5,15 +5,26 @@
 	</head>
 	<body>
 		<div id="desktop_ad_top" style="width: 300px; height: 250px;"></div>
-		<script type="text/javascript" src="../../build/loader.js"></script>
-		<script type="text/javascript" src="../../build/debug-print.js"></script>
 		<script type="text/javascript">
-			bidTorrent({
-				biddersUrl:	'bidders.json',
-				clientUrl:	'../../build/client.html',
-				configUrl:	'publisher.json',
-				debug:		true
-			});
+			error = function (element)
+			{
+				alert('Couldn\'t open ' + element.attributes.src.value + ' ; did you use grunt watch or grunt release?')
+			};
+		</script>
+		<script type="text/javascript" src="../../build/loader.js" onerror="error(this);"></script>
+		<script type="text/javascript" src="../../build/debug-print.js" onerror="error(this);"></script>
+		<script type="text/javascript">
+			if (typeof bidTorrent !== 'function')
+				alert('No "bidTorrent" function found, there was probably errors when loading client.');
+			else
+			{
+				bidTorrent({
+					biddersUrl:	'bidders.json',
+					clientUrl:	'../../build/client.html',
+					configUrl:	'publisher.json',
+					debug:		true
+				});
+			}
 		</script>
 	</body>
 </html>

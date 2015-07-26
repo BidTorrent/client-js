@@ -5,7 +5,7 @@
 
 (function ()
 {
-	var Auction = require('./workflow').Auction;
+	var Auction = require('./auction').Auction;
 	var Message = require('./message').Message;
 
 	var start = function (event)

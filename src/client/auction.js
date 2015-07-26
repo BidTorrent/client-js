@@ -160,63 +160,62 @@ var Auction = {
 
 		for (var i = 0; i < results.length; ++i)
 		{
-			var response = results[i][1];
-			var status = results[i][0];
+			var action = results[i][0];
+			var data = results[i][1];
 
-			if (status === 'expire')
+			if (action === 'error')
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'timeout'});
+				debug('bid_error', {bidder: bidders[i].id, reason: data});
 
 				continue;
 			}
 
-			if (status === 'filter')
+			if (action === 'filter')
 			{
 				debug('bid_filter', {bidder: bidders[i].id});
 
 				continue;
 			}
 
-			// FIXME: should not be reported as an error
-			if (status === 'pass')
+			if (action === 'pass')
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'no bid'});
+				debug('bid_pass', {bidder: bidders[i].id});
 
 				continue;
 			}
 
-			if (status === 'empty' || !response || !response.seatbid)
+			if (action === 'empty' || !data || !data.seatbid)
 			{
 				debug('bid_error', {bidder: bidders[i].id, reason: 'empty response'});
 
 				continue;
 			}
 
-			if (status !== 'take')
+			if (action !== 'take')
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'error ' + response});
+				debug('bid_error', {bidder: bidders[i].id, reason: 'unknown error'});
 
 				continue;
 			}
 
 			// Check currency against allowed ones
-			if (response.cur)
+			if (data.cur)
 			{
 				pass = false;
 
 				for (var j = 0; !pass && j < auction.request.cur.length; ++j)
-					pass = response.cur === auction.request.cur[j];
+					pass = data.cur === auction.request.cur[j];
 
 				if (!pass)
 				{
-					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency "' + response.cur + '"'});
+					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency "' + data.cur + '"'});
 
 					continue;
 				}
 			}
 
 			// Find first seat if any
-			seatbid = response.seatbid[0];
+			seatbid = data.seatbid[0];
 
 			if (!seatbid || !seatbid.bid)
 			{
@@ -333,8 +332,8 @@ var Auction = {
 			.first(HTTP.json(bidder.bid_ep, auction.request), timeout)
 			.chain(function (response, status)
 			{
-				if (status === 408 || new Date().getTime() >= auction.timeout)
-					return ['expire', undefined];
+				if (new Date().getTime() >= auction.timeout)
+					status = 408;
 
 				if (status >= 400 && status < 600)
 					return ['error', status];

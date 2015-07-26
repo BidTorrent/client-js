@@ -4,14 +4,22 @@
 	if (parent.bidTorrent === undefined)
 		return;
 
-	var swap_bidders = function (container, at, complete)
+	/*
+	** Human-readable description for common HTTP errors.
+	*/
+	var errors = {
+		408:	'request timed out (bidder too slow)',
+		502:	'request interrupted (ad blocker?)'
+	};
+
+	var swap_bidders = function (display, at, complete)
 	{
 		var i1 = 0;
 		var i2 = at;
 		var i3 = at + 1;
 
-		var set1 = container.find('.bidder').slice(i1, i2);
-		var set2 = container.find('.bidder').slice(i2, i3);
+		var set1 = display.find('.bidder').slice(i1, i2);
+		var set2 = display.find('.bidder').slice(i2, i3);
 		var set3 = set2.last().nextAll();
 
 		var mb_prev = cssprop(set1.first().prev(), "margin-bottom");
@@ -150,9 +158,18 @@
 		defer(function ()
 		{
 			var bidder;
-			var container;
+			var creative;
+			var display;
 
-			container = $(element);
+			creative = $(element);
+			display = creative.next('.bidtorrent-debug');
+
+			if (display.length < 1)
+			{
+				display = $('<div class="bidtorrent-debug">')
+					.css('width', creative.width() + 'px')
+					.insertAfter(creative);
+			}
 
 			switch (type)
 			{
@@ -162,17 +179,17 @@
 					break;
 
 				case 'init_error':
-					$('#' + data.container).css('visibility', 'hidden');
+					creative.css('visibility', 'hidden');
 
 					$('<div>')
 							.addClass('error')
 							.text('Configuration error: ' + data.reason)
-							.appendTo(container);
+							.appendTo(display);
 
 					break;
 
 				case 'init_valid':
-					$('#' + data.container).css('visibility', 'hidden');
+					creative.css('visibility', 'hidden');
 
 					for (var i = 0; i < data.bidders.length; ++i)
 					{
@@ -183,18 +200,18 @@
 							.append($('<span>').addClass('info').text('Pending...'))
 							.addClass('bidder')
 							.addClass('id-' + bidder.id)
-							.appendTo(container);
+							.appendTo(display);
 					}
 
 					break;
 
 				case 'bid_error':
-					bidder = container.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + data.bidder);
 
 					animate_push (function (complete)
 					{
 						bidder.addClass('error');
-						bidder.find('.info').text('Error: ' + data.reason);
+						bidder.find('.info').text('Error: ' + errors[data.reason] || data.reason);
 
 						complete();
 					});
@@ -202,7 +219,7 @@
 					break;
 
 				case 'bid_filter':
-					bidder = container.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + data.bidder);
 
 					animate_push (function (complete)
 					{
@@ -214,8 +231,21 @@
 
 					break;
 
+				case 'bid_pass':
+					bidder = display.find('.id-' + data.bidder);
+
+					animate_push (function (complete)
+					{
+						bidder.addClass('error');
+						bidder.find('.info').text('Pass');
+
+						complete();
+					});
+
+					break;
+
 				case 'bid_valid':
-					bidder = container.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + data.bidder);
 
 					animate_push(function (complete)
 					{
@@ -227,7 +257,7 @@
 						index = bidder.index();
 
 						if (index > 0)
-							swap_bidders(container, index, complete);
+							swap_bidders(display, index, complete);
 						else
 							complete();
 					});
@@ -235,7 +265,7 @@
 					break;
 
 				case 'end':
-					bidder = container.find('.id-' + data.winner);
+					bidder = display.find('.id-' + data.winner);
 
 					animate_push(function (complete)
 					{
@@ -247,17 +277,17 @@
 						index = bidder.index();
 
 						if (index > 0)
-							swap_bidders(container, index, complete);
+							swap_bidders(display, index, complete);
 						else
 							complete();
 
-						$('#' + data.container).css('visibility', 'visible');
+						creative.css('visibility', 'visible');
 					});
 
 					break;
 
 				case 'exclude':
-					bidder = container.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + data.bidder);
 
 					animate_push(function (complete)
 					{

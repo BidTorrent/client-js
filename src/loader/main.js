@@ -50,7 +50,6 @@ bidTorrent = (function ()
 					var bidders;
 					var client;
 					var config;
-					var debug;
 					var element;
 					var imp;
 					var listener;
@@ -140,17 +139,11 @@ bidTorrent = (function ()
 						// Create and append debug mode element
 						if (init.debug)
 						{
-							debug = document.createElement('div');
-							debug.className = 'bidtorrent-debug';
-							debug.style.width = imp.banner.w + 'px';
-
-							element.appendChild(debug);
-
 							parse = document.createElement('a');
 							parse.href = init.clientUrl;
 
 							// Connect to messages from client component
-							listener = function (channel, debug)
+							listener = function (channel, element)
 							{
 								return function (message)
 								{
@@ -158,11 +151,11 @@ bidTorrent = (function ()
 										return;
 
 									for (var i = 0; i < probes.length; ++i)
-										probes[i](message.data.type, debug, message.data.auction, message.data.data);
+										probes[i](message.data.type, element, message.data.auction, message.data.data);
 								};
 							};
 
-							addEventListener('message', listener(i, debug), true);
+							addEventListener('message', listener(i, element), true);
 						}
 					}
 				});
