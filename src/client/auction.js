@@ -314,7 +314,11 @@ var Auction = {
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
 		else
+		{
 			DOM.html(creative, auction.config.imp[0].passback || '');
+
+			debug('end', {price: secondPrice});
+		}
 	},
 
 	send: function (auction, bidder)

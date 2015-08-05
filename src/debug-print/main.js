@@ -265,6 +265,13 @@
 					break;
 
 				case 'end':
+					if (params.winner === undefined)
+					{
+						creative.css('visibility', 'visible');
+
+						break;
+					}
+
 					bidder = display.find('.id-' + params.winner);
 
 					animate_push(function (complete)

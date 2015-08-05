@@ -5,8 +5,6 @@ var HTTP = require('../http').HTTP;
 var Config = {
 	fetch: function (configUrl, configLocal)
 	{
-		configLocal = configLocal || {};
-
 		if (configUrl === undefined)
 			return Future.make([configLocal, 200]); // TODO: replace this hack
 
@@ -24,6 +22,9 @@ var Config = {
 	merge: function (configRemote, configLocal)
 	{
 		var result;
+
+		if (configLocal === undefined)
+			return configRemote;
 
 		result = {};
 

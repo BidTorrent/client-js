@@ -17,7 +17,7 @@
 	},
 	"imp": [{
 		"id": "desktop_ad_top",
-		"passback": "<div><img src=\"http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg\"></div>"
+		"passback": "<div id=\"passback\">This text <script src=\"../test/passback/passback.js\" type=\"text/javascript\"></script> should not <script type=\"text/javascript\">passback('passback');</script> stay here.</div>"
 	}],
 	"badv": [
 		"porn.com",

@@ -1,11 +1,69 @@
 
 var DOM = {
-	html: function (node, content)
+	html: function (node, content, complete)
 	{
+		var evaluate = function (node, complete)
+		{
+			var parent;
+			var recurse;
+			var script;
+			var source;
+
+			// Script node found, force evaluation
+			if (node.nodeName.toUpperCase() === 'SCRIPT' && (!node.type || node.type.toLowerCase() === 'text/javascript') && node.parentNode)
+			{
+				source = node.text || node.textContent || node.innerHTML || '';
+				script = document.createElement('script');
+				script.type = 'text/javascript';
+
+				// Asynchronously complete script having an "src" attribute to
+				// simulate standard DOM sequential loading
+				if (node.src)
+				{
+					script.onabort = complete;
+					script.onerror = complete;
+					script.onload = complete;
+					script.src = node.src;
+				}
+
+				try
+				{
+					// Standard way to set script source code
+					script.appendChild(document.createTextNode(source));
+				}
+				catch (e)
+				{
+					// Workaround for IE <= 7
+					script.text = source;
+				}
+
+				// Swap inactive script node with created one
+				parent = node.parentNode;
+				parent.removeChild(node);
+				parent.appendChild(script);
+
+				// Synchronously complete script without "src" attribute
+				if (!node.src)
+					complete();
+
+				return;
+			}
+
+			// Not a script node, browse children
+			recurse = function (nodes, i)
+			{
+				if (i < nodes.length)
+					evaluate(nodes[i], function () { recurse(nodes, i + 1); });
+				else
+					complete();
+			};
+
+			recurse(node.childNodes, 0);
+		};
+
 		node.innerHTML = content;
 
-		if (node.parentNode)
-			DOM.triggerJS(node.parentNode);
+		evaluate(node, complete || function () {});
 
 		return node;
 	},
@@ -17,69 +75,6 @@ var DOM = {
 		img.width = '1px';
 		img.src = url;
 		parent.appendChild(img);
-	},
-
-	// FIXME: big fat hack, doesn't work, read jQuery source code to fix this
-	triggerJS: function (parent)
-	{
-		var apply;
-		var node;
-		var nodes;
-		var trick;
-
-		apply = function (node)
-		{
-			var child;
-			var nodes = [];
-
-			for (var i = 0; i < node.childNodes.length; ++i)
-			{
-				child = node.childNodes[i];
-
-				if (child.nodeName.toUpperCase() === 'SCRIPT' && (!child.type || child.type.toLowerCase() === 'text/javascript'))
-					nodes.push(child);
-				else
-					nodes = nodes.concat(apply(child));
-			}
-
-			return nodes;
-		};
-
-		function trick(elem)
-		{
-			var script = document.createElement('script');
-			var source = elem.text || elem.textContent || elem.innerHTML || '';
-			var target = document.getElementsByTagName('head')[0] || document.documentElement;
-
-			script.src = elem.src;
-			script.type = 'text/javascript';
-
-			try
-			{
-				// Standard way to set script source code
-				script.appendChild(document.createTextNode(source));
-			}
-			catch (e)
-			{
-				// Workaround for IE <= 7
-				script.text = source;
-			}
-
-			target.insertBefore(script, target.firstChild);
-			target.removeChild(script);
-		};
-
-		nodes = apply(parent);
-
-		for (i = 0; i < nodes.length; i++)
-		{
-			node = nodes[i];
-
-			if (node.parentNode)
-				node.parentNode.removeChild(node);
-
-			trick(node);
-		}
 	}
 };
 
