@@ -153,7 +153,7 @@
 	document.body.appendChild(debugCss);
 
 	// FIXME
-	parent.bidTorrent.connect(function (type, element, auction, data)
+	parent.bidTorrent.connect(function (type, element, auction, params)
 	{
 		defer(function ()
 		{
@@ -174,7 +174,7 @@
 			switch (type)
 			{
 				case 'alert':
-					console.error('[BidTorrent] ' + data);
+					console.error('[BidTorrent] ' + params);
 
 					break;
 
@@ -183,7 +183,7 @@
 
 					$('<div>')
 							.addClass('error')
-							.text('Configuration error: ' + data.reason)
+							.text('Configuration error: ' + params.reason)
 							.appendTo(display);
 
 					break;
@@ -191,9 +191,9 @@
 				case 'init_valid':
 					creative.css('visibility', 'hidden');
 
-					for (var i = 0; i < data.bidders.length; ++i)
+					for (var i = 0; i < params.bidders.length; ++i)
 					{
-						bidder = data.bidders[i];
+						bidder = params.bidders[i];
 
 						$('<div>')
 							.append($('<span>').addClass('name').text(bidder.name))
@@ -206,12 +206,12 @@
 					break;
 
 				case 'bid_error':
-					bidder = display.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + params.bidder);
 
 					animate_push (function (complete)
 					{
 						bidder.addClass('error');
-						bidder.find('.info').text('Error: ' + errors[data.reason] || data.reason);
+						bidder.find('.info').text('Error: ' + errors[params.reason] || params.reason);
 
 						complete();
 					});
@@ -219,7 +219,7 @@
 					break;
 
 				case 'bid_filter':
-					bidder = display.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + params.bidder);
 
 					animate_push (function (complete)
 					{
@@ -232,7 +232,7 @@
 					break;
 
 				case 'bid_pass':
-					bidder = display.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + params.bidder);
 
 					animate_push (function (complete)
 					{
@@ -245,14 +245,14 @@
 					break;
 
 				case 'bid_valid':
-					bidder = display.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + params.bidder);
 
 					animate_push(function (complete)
 					{
 						var index;
 
 						bidder.addClass('valid');
-						bidder.find('.info').text('Bid price: $' + data.price.toFixed(2));
+						bidder.find('.info').text('Bid price: $' + params.price.toFixed(2));
 
 						index = bidder.index();
 
@@ -265,14 +265,14 @@
 					break;
 
 				case 'end':
-					bidder = display.find('.id-' + data.winner);
+					bidder = display.find('.id-' + params.winner);
 
 					animate_push(function (complete)
 					{
 						var index;
 
 						bidder.addClass('winner');
-						bidder.find('.info').text(bidder.find('.info').text() + ' ; Paid price: $' + data.price.toFixed(2));
+						bidder.find('.info').text(bidder.find('.info').text() + ' ; Paid price: $' + params.price.toFixed(2));
 
 						index = bidder.index();
 
@@ -287,11 +287,11 @@
 					break;
 
 				case 'exclude':
-					bidder = display.find('.id-' + data.bidder);
+					bidder = display.find('.id-' + params.bidder);
 
 					animate_push(function (complete)
 					{
-						bidder.find('.info').text('Excluded: ' + data.reason);
+						bidder.find('.info').text('Excluded: ' + params.reason);
 
 						complete();
 					});

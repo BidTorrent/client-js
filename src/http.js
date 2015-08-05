@@ -34,12 +34,9 @@ var HTTP = {
 
 	text: function (url, data)
 	{
-		var future;
-		var xhr;
+		var future = new Future();
+		var xhr = new XMLHttpRequest();
 
-		future = new Future();
-
-		xhr = new XMLHttpRequest();
 		xhr.withCredentials = true;
 		xhr.onreadystatechange = function ()
 		{

@@ -8,22 +8,30 @@
 	var Auction = require('./auction').Auction;
 	var Message = require('./message').Message;
 
-	var start = function (event)
+	var start = function (message)
 	{
-		var bidders = event.data.bidders;
-		var channel = event.data.channel;
-		var config = event.data.config;
-		var debug = event.data.debug;
-		var impUrl = event.data.impUrl;
+		var data;
 
-		if (!processConfig(config, channel))
+		try
+		{
+			data = JSON.parse(message.data);
+		}
+		catch (e)
+		{
+			return;
+		}
+
+		if (!processConfig(data.config, data.siteUrl, data.channel))
 			return;
 
-		everythingLoaded(bidders, config, channel, debug, impUrl);
+		everythingLoaded(data.bidders, data.config, data.channel, data.debug, data.impUrl);
 	};
 
-	var processConfig = function (config, channel)
+	var processConfig = function (config, siteUrl, channel)
 	{
+		var domain;
+		var imp;
+
 		if (!config.site)
 		{
 			Message.alert(channel, 'missing site');
@@ -45,14 +53,21 @@
 			return false;
 		}
 
+		domain = siteUrl.replace(/^[^/]+:\/\//, '').replace(/\/.*/, '');
+
 		config.cur = config.cur || ['USD'];
-		config.site = config.site || {};
-		config.site.domain = config.site.domain || 'bidtorrent.com';
 		config.imp = config.imp && config.imp.length > 0 ? config.imp : [{}];
-		config.imp[0].bidfloor = config.imp[0].bidfloor || 0.1;
-		config.imp[0].instl = config.imp[0].instl || 0;
-		config.imp[0].secure = config.imp[0].secure || false;
+		config.site.domain = config.site.domain || domain;
+		config.site.publisher.name = config.site.publisher.name || domain;
 		config.tmax = config.tmax || 500;
+
+		for (var i = 0; i < config.imp.length; ++i)
+		{
+			imp = config.imp[i];
+			imp.bidfloor = imp.bidfloor || 0.1;
+			imp.instl = imp.instl || 0;
+			imp.secure = imp.secure !== undefined ? imp.secure : siteUrl.substr(0, 6) === 'https:';
+		}
 
 		return true;
 	}
@@ -85,7 +100,7 @@
 		};
 
 		if (debug)
-			send = function (event, data) { Message.debug(channel, id, event, data); };
+			send = function (event, params) { Message.debug(channel, id, event, params); };
 		else
 			send = function () {};
 
@@ -99,11 +114,7 @@
 
 	var formatBidRequest = function (id, config)
 	{
-		var auctionRequest;
-		var impression;
-
-		auctionRequest =
-		{
+		return {
 			badv: config.badv,
 			bcat: config.bcat,
 			cur: config.cur,
@@ -118,9 +129,7 @@
 			tmax: config.tmax,
 			user: {}
 		};
-
-		return auctionRequest;
 	};
 
-	addEventListener('message', start, false);
+	window.addEventListener('message', start, false);
 })();

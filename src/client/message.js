@@ -5,14 +5,14 @@ var Message = {
 		Message.send({channel: channel, type: 'alert', message: message});
 	},
 
-	debug: function (channel, auction, event, data)
+	debug: function (channel, auction, event, params)
 	{
-		Message.send({channel: channel, type: event, auction: auction, data: data});
+		Message.send({channel: channel, type: event, auction: auction, params: params});
 	},
 
 	send: function (data)
 	{
-		window.parent.postMessage(data, '*');
+		window.parent.postMessage(JSON.stringify(data), '*');
 	}
 };
 

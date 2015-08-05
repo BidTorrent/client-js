@@ -16,17 +16,30 @@ bidTorrent = (function ()
 	// BidTorrent JavaScript loader
 	loader = function (init)
 	{
+		var running;
 		var start;
 
 		// Ensure required JavaScript features are supported
-		if ((typeof postMessage === 'undefined') ||
-		    (typeof XMLHttpRequest === 'undefined') ||
-		    (!('withCredentials' in new XMLHttpRequest()) && (typeof XDomainRequest === 'undefined')))
+		if ((window.JSON === undefined) ||
+		    (window.postMessage === undefined) ||
+		    (window.XMLHttpRequest === undefined) ||
+		    (new XMLHttpRequest().withCredentials === undefined))
+		{
+			if (init.debug)
+				console.error('[BidTorrent] unsupported browser, BidTorrent can\'t execute');
+
 			return;
+		}
 
 		// Create the actual loading function
+		running = false;
 		start = function ()
 		{
+			if (running)
+				return;
+
+			running = true;
+
 			// Populate initialization object with missing default value
 			init = init || {};
 
@@ -117,13 +130,14 @@ bidTorrent = (function ()
 						{
 							return function ()
 							{
-								client.contentWindow.postMessage({
+								client.contentWindow.postMessage(JSON.stringify({
 									bidders:	bidders,
 									channel:	channel,
 									config:		config,
 									debug:		init.debug,
-									impUrl: 	init.impUrl
-								}, '*');
+									impUrl: 	init.impUrl,
+									siteUrl:	url('/')
+								}), '*');
 							};
 						})(i);
 
@@ -143,29 +157,41 @@ bidTorrent = (function ()
 							parse.href = init.clientUrl;
 
 							// Connect to messages from client component
-							listener = function (channel, element)
+							window.addEventListener('message', (function (channel, element)
 							{
 								return function (message)
 								{
-									if (message.origin !== parse.protocol + '//' + parse.hostname || message.data.channel !== channel)
+									var data;
+
+									if (message.origin !== parse.protocol + '//' + parse.hostname)
+										return;
+
+									try
+									{
+										data = JSON.parse(message.data);
+									}
+									catch (e)
+									{
+										return;
+									}
+
+									if (data.channel !== channel)
 										return;
 
 									for (var i = 0; i < probes.length; ++i)
-										probes[i](message.data.type, element, message.data.auction, message.data.data);
+										probes[i](data.type, element, data.auction, data.params);
 								};
-							};
-
-							addEventListener('message', listener(i, element), true);
+							})(i, element), false);
 						}
 					}
 				});
 		};
 
 		// Execute loader callback when page is loaded or synchronously
-		if (document.readyState === 'complete' || document.readyState === 'loaded')
-			start();
-		else
+		if (document.readyState !== 'complete' && document.readyState !== 'loaded')
 			document.addEventListener('DOMContentLoaded', start, false);
+		else
+			start();
 	};
 
 	// Parse relative into absolute URL
