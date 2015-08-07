@@ -5,7 +5,7 @@ var HTTP = require('../http').HTTP;
 var Signature = require('./signature').Signature;
 
 var Auction = {
-	acceptBidder: function (bidder, auction)
+	acceptBidder: function (config, auction, bidder)
 	{
 		var filters;
 
@@ -30,7 +30,7 @@ var Auction = {
 		// if publisher country is part of blacklist countries => bidder banished
 		if (filters.pub_ctry !== undefined &&
 			filters.pub_ctry.length !== 0 &&
-			auction.config.site.publisher.country !== undefined)
+			config.site.publisher.country !== undefined)
 		{
 			// if whitelist mode
 			if (filters.pub_ctry_wl !== undefined && filters.pub_ctry_wl === true)
@@ -39,7 +39,7 @@ var Auction = {
 
 				for (; ctryId < filters.pub_ctry.length; ++ctryId)
 				{
-					if (filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
+					if (filters.pub_ctry[ctryId] === config.site.publisher.country)
 						break;
 				}
 
@@ -50,7 +50,7 @@ var Auction = {
 			{
 				for (var ctryId = 0; ctryId < filters.pub_ctry.length; ++ctryId)
 				{
-					if (filters.pub_ctry[ctryId] === auction.config.site.publisher.country)
+					if (filters.pub_ctry[ctryId] === config.site.publisher.country)
 						return false;
 				}
 			}
@@ -87,14 +87,14 @@ var Auction = {
 
 		// if 1 site category of publisher is blacklisted per bidder => bidder banished
 		if (filters.cat_bl !== undefined &&
-			auction.config.site !== undefined &&
-			auction.config.site.cat !== undefined)
+			config.site !== undefined &&
+			config.site.cat !== undefined)
 		{
 			for (var catId = 0; catId < filters.cat_bl.length; ++catId)
 			{
 				var catBl = filters.cat_bl[catId];
 
-				if (auction.config.site.cat.contains(catBl))
+				if (config.site.cat.contains(catBl))
 					return false;
 			}
 		}
@@ -106,7 +106,7 @@ var Auction = {
 			{
 				var pubBl = filters.pub[pubId];
 
-				if (auction.config.site.domain === pubBl)
+				if (config.site.domain === pubBl)
 					return false;
 			}
 		}
@@ -127,7 +127,7 @@ var Auction = {
 			.replace('${CLICK_URL}', '');
 	},
 
-	begin: function (auction, debug)
+	begin: function (config, auction, debug)
 	{
 		var futures = [];
 
@@ -135,8 +135,8 @@ var Auction = {
 		{
 			var bidder = auction.bidders[i];
 
-			if (Auction.acceptBidder(bidder, auction))
-				futures.push(Auction.send(auction, bidder));
+			if (Auction.acceptBidder(config, auction, bidder))
+				futures.push(Auction.send(config, auction, bidder));
 			else
 				futures.push(Future.make('filter', undefined));
 		}
@@ -149,6 +149,7 @@ var Auction = {
 	end: function (auction, bidders, results, config, impUrl, debug)
 	{
 		var bid;
+		var candidates;
 		var creative;
 		var pass;
 		var seatbid;
@@ -156,7 +157,8 @@ var Auction = {
 		var winnerBid;
 		var winnerBidder;
 
-		secondPrice = auction.config.imp[0].bidfloor;
+		candidates = [];
+		secondPrice = config.imp[0].bidfloor;
 
 		for (var i = 0; i < results.length; ++i)
 		{
@@ -273,12 +275,20 @@ var Auction = {
 				}
 			}
 
-			if (!Signature.check(bid.price, auction.request.id + '-' + auction.config.imp[0].id, auction.config.site.publisher.id, auction.config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
+			if (!Signature.check(bid.price, auction.request.id + '-' + config.imp[0].id, config.site.publisher.id, config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
 			{
 				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
 
 				continue;
 			}
+
+			// Valid bid received, append to candidates list
+			candidates.push({
+				bidder:		bidders[i].id,
+				impid:		bid.impid,
+				price:		bid.price,
+				signature:	bid.ext.signature
+			});
 
 			debug('bid_valid', {bidder: bidders[i].id, price: bid.price});
 
@@ -309,19 +319,19 @@ var Auction = {
 				DOM.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
 
 			if (impUrl)
-				DOM.pixel(document.body, Auction.renderImpressionPixel(config, auction, bidders, results, impUrl));
+				DOM.pixel(document.body, Auction.renderImpressionPixel(impUrl, config, auction, candidates));
 
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
 		else
 		{
-			DOM.html(creative, auction.config.imp[0].passback || '');
+			DOM.html(creative, config.imp[0].passback || '');
 
 			debug('end', {price: secondPrice});
 		}
 	},
 
-	send: function (auction, bidder)
+	send: function (config, auction, bidder)
 	{
 		var timeout = new Future();
 
@@ -329,7 +339,7 @@ var Auction = {
 		setTimeout(function ()
 		{
 			timeout.signal(undefined, 408);
-		}, auction.config.tmax);
+		}, config.tmax);
 
 		// Wrap either actual bidder response or timeout
 		return Future
@@ -355,10 +365,11 @@ var Auction = {
 	/*
 	* Renders an impression pixel in the bottom of the ad
 	*/
-	renderImpressionPixel: function (config, auction, bidders, results, impUrl)
+	renderImpressionPixel: function (impUrl, config, auction, candidates)
 	{
 		var bid;
 		var bidder;
+		var candidate;
 		var first;
 		var parts;
 		var response;
@@ -367,31 +378,16 @@ var Auction = {
 
 		parts = {};
 
-		for (var i = 0; i < results.length; i++)
+		for (var i = 0; i < candidates.length; i++)
 		{
-			response = results[i][1];
-			status = results[i][0];
+			candidate = candidates[i];
 
-			if (!response || !response.seatbid || status !== 'take')
-				continue;
-
-			bidder = bidders[i];
-			seatbid = response.seatbid[0];
-
-			if (!seatbid || !seatbid.bid)
-				continue;
-
-			bid = seatbid.bid[0];
-
-			if (!bid || !bid.ext || !bid.ext.signature || !bid.price)
-				continue;
-
-			parts['a'] = auction.id + '-' + bid.impid; // FIXME: doesn't work if we receive responses for different impression ids
-			parts['d[' + bidders[i].id + ']'] = bid.price + '-' + bid.ext.signature;
+			parts['a'] = auction.id + '-' + candidate.impid; // FIXME: doesn't work if we receive responses for different impression ids
+			parts['d[' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
 		}
 
 		first = true;
-		parts['f'] = auction.config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
+		parts['f'] = config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
 		parts['p'] = config.site.publisher.id;
 
 		for (var key in parts)

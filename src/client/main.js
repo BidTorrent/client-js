@@ -93,7 +93,6 @@
 		auction =
 		{
 			bidders:	bidders,
-			config:		config,
 			expire:		new Date().getTime() + config.tmax,			
 			id:			id,
 			request:	formatBidRequest(id, config)
@@ -105,7 +104,7 @@
 			send = function () {};
 
 		Auction
-			.begin(auction, send)
+			.begin(config, auction, send)
 			.then(function ()
 			{
 				Auction.end(auction, bidders, arguments, config, impUrl, send);
