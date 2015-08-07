@@ -9,13 +9,7 @@ var Auction = {
 	{
 		var filters;
 
-		if (bidder.id === undefined)
-			return false;
-
-		if (bidder.key === undefined)
-			return false;
-
-		if (!bidder.bid_ep)
+		if (bidder.id === undefined || bidder.key === undefined || !bidder.bid_ep)
 			return false;
 
 		filters = bidder.filters;
@@ -112,19 +106,6 @@ var Auction = {
 		}
 
 		return true;
-	},
-
-	applyMacros: function (template, auction, secondPrice)
-	{
-		return template
-			.replace('${AUCTION_AD_ID}', '')
-			.replace('${AUCTION_BID_ID}', '')
-			.replace('${AUCTION_CURRENCY}', '')
-			.replace('${AUCTION_ID}', auction.id)
-			.replace('${AUCTION_IMP_ID}', '')
-			.replace('${AUCTION_SEAT_ID}', '')
-			.replace('${AUCTION_PRICE}', secondPrice)
-			.replace('${CLICK_URL}', '');
 	},
 
 	begin: function (config, auction, debug)
@@ -313,13 +294,13 @@ var Auction = {
 		{
 			secondPrice += 0.01;
 
-			DOM.html(creative, Auction.applyMacros(winnerBid.adm, auction, secondPrice));
-
-			if (winnerBid.nurl)
-				DOM.pixel(document.body, Auction.applyMacros(winnerBid.nurl, auction, secondPrice));
+			DOM.html(creative, Auction.renderMacro(winnerBid.adm, auction, secondPrice));
 
 			if (impUrl)
-				DOM.pixel(document.body, Auction.renderImpressionPixel(impUrl, config, auction, candidates));
+				DOM.pixel(document.body, Auction.renderImpression(impUrl, config, auction, candidates));
+
+			if (winnerBid.nurl)
+				DOM.pixel(document.body, Auction.renderMacro(winnerBid.nurl, auction, secondPrice));
 
 			debug('end', {winner: winnerBidder.id, price: secondPrice});
 		}
@@ -365,16 +346,11 @@ var Auction = {
 	/*
 	* Renders an impression pixel in the bottom of the ad
 	*/
-	renderImpressionPixel: function (impUrl, config, auction, candidates)
+	renderImpression: function (impUrl, config, auction, candidates)
 	{
-		var bid;
-		var bidder;
 		var candidate;
 		var first;
 		var parts;
-		var response;
-		var seatbid;
-		var status;
 
 		parts = {};
 
@@ -397,6 +373,19 @@ var Auction = {
 		}
 
 		return impUrl;
+	},
+
+	renderMacro: function (template, auction, secondPrice)
+	{
+		return template
+			.replace('${AUCTION_AD_ID}', '')
+			.replace('${AUCTION_BID_ID}', '')
+			.replace('${AUCTION_CURRENCY}', '')
+			.replace('${AUCTION_ID}', auction.id)
+			.replace('${AUCTION_IMP_ID}', '')
+			.replace('${AUCTION_SEAT_ID}', '')
+			.replace('${AUCTION_PRICE}', secondPrice)
+			.replace('${CLICK_URL}', '');
 	}
 };
 
