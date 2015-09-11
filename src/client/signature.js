@@ -37,11 +37,8 @@ function base64ToHex(str) {
 }
 
 var Signature = {
-    check: function (price, requestIDdashImpId, publisherId, bidfloor, key, signature) {
-        data = price.toFixed(6) +
-               requestIDdashImpId +
-               publisherId +
-               bidfloor.toFixed(6);
+    check: function (price, auctionId, impId, publisherId, bidfloor, key, signature) {
+        data = price.toFixed(6) + '|' + auctionId + '|' + impId + '|' + publisherId + '|' + bidfloor.toFixed(6);
         keyTyped = KEYUTIL.getKey(key);
         var sig = new crypto.Signature({"alg": "SHA1withRSA", "prov": "cryptojs/jsrsa"});
         sig.initVerifyByPublicKey(keyTyped);

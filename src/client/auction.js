@@ -256,7 +256,7 @@ var Auction = {
 				}
 			}
 
-			if (!Signature.check(bid.price, auction.request.id + '-' + config.imp[0].id, config.site.publisher.id, config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
+			if (!Signature.check(bid.price, auction.request.id, config.imp[0].id, config.site.publisher.id, config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
 			{
 				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
 
@@ -358,13 +358,14 @@ var Auction = {
 		{
 			candidate = candidates[i];
 
-			parts['a'] = auction.id + '-' + candidate.impid; // FIXME: doesn't work if we receive responses for different impression ids
-			parts['d[' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
+			parts['d[0][' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
 		}
 
+		parts['a'] = auction.id
+		parts['f[0]'] = config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
+		parts['i[0]'] = config.imp[0].id; // FIXME: doesn't work if we receive responses for different impression ids
+		parts['p[0]'] = config.site.publisher.id;
 		first = true;
-		parts['f'] = config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
-		parts['p'] = config.site.publisher.id;
 
 		for (var key in parts)
 		{

@@ -211,7 +211,7 @@
 					animate_push (function (complete)
 					{
 						bidder.addClass('error');
-						bidder.find('.info').text('Error: ' + errors[params.reason] || params.reason);
+						bidder.find('.info').text('Error: ' + (errors[params.reason] || params.reason));
 
 						complete();
 					});
