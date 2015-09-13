@@ -350,21 +350,32 @@ var Auction = {
 	{
 		var candidate;
 		var first;
+		var impId;
 		var parts;
 
 		parts = {};
+		parts['a'] = auction.id
+		parts['p'] = config.site.publisher.id;
 
-		for (var i = 0; i < candidates.length; i++)
+		for (var i = 0; i < 1 /* config.imp.length */; ++i)
 		{
-			candidate = candidates[i];
+			impId = config.imp[i].id;
 
-			parts['d[0][' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
+			for (var j = 0; j < candidates.length; j++)
+			{
+				candidate = candidates[j];
+
+				// FIXME: only accept candidates for current impId, should be improved but multi-imp is not supported yet
+				if (candidate.impid !== impId)
+					continue;
+
+				parts['d[' + i + '][' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
+			}
+
+			parts['f[' + i + ']'] = config.imp[i].bidfloor;
+			parts['i[' + i + ']'] = impId;
 		}
 
-		parts['a'] = auction.id
-		parts['f[0]'] = config.imp[0].bidfloor; // FIXME: should be the same impression we extracted bids for (see above)
-		parts['i[0]'] = config.imp[0].id; // FIXME: doesn't work if we receive responses for different impression ids
-		parts['p[0]'] = config.site.publisher.id;
 		first = true;
 
 		for (var key in parts)

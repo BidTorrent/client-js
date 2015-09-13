@@ -4,6 +4,16 @@
 		<meta charset="UTF-8" />
 	</head>
 	<body>
+		<h1>BidTorrent Impression Tracking Test</h1>
+		<p>Uses local configuration files to send bid request to Criteo bidder
+		through local wrapper, expect valid bid, display ad and call local
+		impression tracking endpoint. To run this test you'll need following
+		setup:</p>
+		<ul>
+			<li>This demo page hosted behind any web server you want (no restriction on domain or path) ;</li>
+			<li>Criteo bidder wrapper hosted in http://bt-dev.criteo.com/criteoBid.php ;</li>
+			<li>Impression tracker hosted in http://log-dev.bidtorrent.io/imp.php</li>
+		</ul>
 		<div id="desktop_ad_top" style="width: 300px; height: 250px;"></div>
 		<script type="text/javascript">
 			error = function (element)
