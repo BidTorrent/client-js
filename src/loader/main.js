@@ -95,6 +95,8 @@ bidTorrent = (function ()
 						return;
 					}
 
+					var zoneFound = 0;
+
 					for (var i = 0; i < config.imp.length; ++i)
 					{
 						imp = config.imp[i];
@@ -110,12 +112,9 @@ bidTorrent = (function ()
 						element = document.getElementById(imp.id);
 
 						if (!element)
-						{
-							if (init.debug)
-								console.error('[BidTorrent] no DOM element found for id #' + imp.id);
+							continue;
 
-							return;
-						}
+						zoneFound ++;
 
 						if (imp.banner === undefined || imp.banner.w === undefined || imp.banner.h === undefined)
 						{
@@ -133,6 +132,7 @@ bidTorrent = (function ()
 								clientClosure.contentWindow.postMessage(JSON.stringify({
 									bidders:	bidders,
 									channel:	channel,
+									impId:		channel,
 									config:		config,
 									debug:		init.debug,
 									impUrl: 	init.impUrl,
@@ -183,6 +183,13 @@ bidTorrent = (function ()
 								};
 							})(i, element), false);
 						}
+					}
+
+					if (zoneFound == 0) {
+						if (init.debug)
+							console.error('[BidTorrent] no DOM element found for id #' + imp.id);
+
+						return;
 					}
 				});
 		};

@@ -1,0 +1,40 @@
+{
+	"site": {
+		"cat": [
+			"IAB1",
+			"IAB9",
+			"IAB9-30",
+			"entertainment",
+			"games"
+		],
+		"domain": "www.bbc.com",
+		"id": "123",
+		"publisher": {
+			"id": "876487564786",
+			"name": "Yahoo",
+			"country": "FR"
+		}
+	},
+	"imp": [{
+		"id": "desktop_ad_nonexistant",
+		"passback": "<div><img src=\"http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg\"></div>"
+	},{
+		"id": "desktop_ad_top",
+		"passback": "<div><img src=\"http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg\"></div>"
+	},{
+		"id": "desktop_ad_bottom",
+		"passback": "<div><img src=\"http://ecx.images-amazon.com/images/I/51Kbao5tpVL._SX300_.jpg\"></div>"
+	}],
+	"badv": [
+		"porn.com",
+		"badcontent2.net",
+		"competitivegame.com"
+	],
+	"bcat": [
+		"IAB6-7",
+		"IAB7-3",
+		"IAB7-28"
+	],
+	"cur": ["USD"],
+	"tmax": 500
+}

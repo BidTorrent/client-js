@@ -21,16 +21,28 @@
 			return;
 		}
 
-		if (!processConfig(data.config, data.siteUrl, data.channel))
+		if (!processConfig(data.config, data.siteUrl, data.channel, data.impId))
 			return;
 
 		everythingLoaded(data.bidders, data.config, data.channel, data.debug, data.impUrl);
 	};
 
-	var processConfig = function (config, siteUrl, channel)
+	var filterBadImps = function (config, impId)
+	{
+		var imps = config.imp;
+		config.imp = [];
+		for (var i=0 ; i<imps.length ; i++)
+		{
+			if (i==impId) config.imp.push(imps[i]);
+		}
+	}
+
+	var processConfig = function (config, siteUrl, channel, impId)
 	{
 		var domain;
 		var imp;
+
+		filterBadImps(config, impId);
 
 		if (!config.site)
 		{
@@ -93,7 +105,7 @@
 		auction =
 		{
 			bidders:	bidders,
-			expire:		new Date().getTime() + config.tmax,			
+			expire:		new Date().getTime() + config.tmax,
 			id:			id,
 			request:	formatBidRequest(id, config)
 		};
