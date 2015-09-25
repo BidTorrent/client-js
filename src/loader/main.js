@@ -49,7 +49,7 @@ bidTorrent = (function ()
 			init.biddersUrl = url(init.biddersUrl || 'http://www.bidtorrent.io/api/bidders');
 			init.clientUrl = url(init.clientUrl || 'http://bidtorrent.io/client.html');
 			init.configUrl = init.configUrl ? url(init.configUrl) : undefined;
-			init.impUrl = url(init.impUrl || 'http://log.bidtorrent.io/imp');
+			init.impUrl = url(init.impUrl || 'http://api.bidtorrent.io/imp');
 
 			// Load bidders list and configuration, continue when available
 			Future
