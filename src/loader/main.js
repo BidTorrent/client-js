@@ -126,11 +126,11 @@ bidTorrent = (function ()
 
 						// Create and append client element
 						client = document.createElement('iframe');
-						client.onload = (function (channel)
+						client.onload = (function (clientClosure, channel)
 						{
 							return function ()
 							{
-								client.contentWindow.postMessage(JSON.stringify({
+								clientClosure.contentWindow.postMessage(JSON.stringify({
 									bidders:	bidders,
 									channel:	channel,
 									config:		config,
@@ -139,7 +139,7 @@ bidTorrent = (function ()
 									siteUrl:	url('/')
 								}), '*');
 							};
-						})(i);
+						})(client, i);
 
 						client.frameBorder = 0;
 						client.scrolling = 'no';
