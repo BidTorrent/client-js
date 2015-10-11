@@ -108,7 +108,7 @@ var Auction = {
 		return true;
 	},
 
-	begin: function (config, auction, debug)
+	begin: function (config, auction, sendDebug)
 	{
 		var futures = [];
 
@@ -122,21 +122,20 @@ var Auction = {
 				futures.push(Future.make('filter', undefined));
 		}
 
-		debug('init_valid', {bidders: auction.bidders});
+		sendDebug('init_valid', {bidders: auction.bidders});
 
 		return Future.bind.apply(null, futures);
 	},
 
-	end: function (auction, bidders, results, config, impUrl, debug)
+	end: function (auction, bidders, results, config, impUrl, sendDebug, sendPass)
 	{
 		var bid;
 		var candidates;
-		var creative;
 		var pass;
 		var seatbid;
 		var secondPrice;
 		var winnerBid;
-		var winnerBidder;
+		var winnerId;
 
 		candidates = [];
 		secondPrice = config.imp[0].bidfloor;
@@ -148,35 +147,35 @@ var Auction = {
 
 			if (action === 'error')
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: data});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: data});
 
 				continue;
 			}
 
 			if (action === 'filter')
 			{
-				debug('bid_filter', {bidder: bidders[i].id});
+				sendDebug('bid_filter', {bidder: bidders[i].id});
 
 				continue;
 			}
 
 			if (action === 'pass')
 			{
-				debug('bid_pass', {bidder: bidders[i].id});
+				sendDebug('bid_pass', {bidder: bidders[i].id});
 
 				continue;
 			}
 
 			if (action === 'empty' || !data || !data.seatbid)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'empty response'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'empty response'});
 
 				continue;
 			}
 
 			if (action !== 'take')
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'unknown error'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'unknown error'});
 
 				continue;
 			}
@@ -191,7 +190,7 @@ var Auction = {
 
 				if (!pass)
 				{
-					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency "' + data.cur + '"'});
+					sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid currency "' + data.cur + '"'});
 
 					continue;
 				}
@@ -202,7 +201,7 @@ var Auction = {
 
 			if (!seatbid || !seatbid.bid)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'no bid'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'no bid'});
 
 				continue;
 			}
@@ -212,28 +211,28 @@ var Auction = {
 
 			if (!bid || !bid.adm)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'missing creative'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing creative'});
 
 				continue;
 			}
 
 			if (!bid.price)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'missing or zero price'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing or zero price'});
 
 				continue;
 			}
 
 			if (!bid.ext || !bid.ext.signature)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'missing signature'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing signature'});
 
 				continue;
 			}
 
 			if (bid.impid && bid.impid != auction.request.imp[0].id)
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid imp id'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid imp id'});
 
 				continue;
 			}
@@ -250,7 +249,7 @@ var Auction = {
 
 				if (!pass)
 				{
-					debug('bid_error', {bidder: bidders[i].id, reason: 'invalid advertiser domain'});
+					sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid advertiser domain'});
 
 					continue;
 				}
@@ -258,7 +257,7 @@ var Auction = {
 
 			if (!Signature.check(bid.price, auction.request.id, config.imp[0].id, config.site.publisher.id, config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
 			{
-				debug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
 
 				continue;
 			}
@@ -271,45 +270,47 @@ var Auction = {
 				signature:	bid.ext.signature
 			});
 
-			debug('bid_valid', {bidder: bidders[i].id, price: bid.price});
+			sendDebug('bid_valid', {bidder: bidders[i].id, price: bid.price});
 
 			if (winnerBid === undefined || winnerBid.price < bid.price)
 			{
 				if (winnerBid !== undefined)
 					secondPrice = winnerBid.price;
 
-				winnerBidder = bidders[i];
 				winnerBid = bid;
+				winnerId = bidders[i].id;
 			}
 			else if (secondPrice === undefined || bid.price > secondPrice)
 				secondPrice = bid.price;
 		}
 
-		// Build and insert creative element
-		creative = document.createElement('div');
-
-		document.body.appendChild(creative);
-
+		// Winner has been selected, display and track impression
 		if (winnerBid !== undefined)
 		{
 			secondPrice += 0.01;
 
-			DOM.html(creative, Auction.renderMacro(winnerBid.adm, auction, secondPrice));
+			DOM.html(DOM.create(document.body, 'div'), Auction.renderMacro(winnerBid.adm, auction, secondPrice));
 
-			if (impUrl)
-				DOM.pixel(document.body, Auction.renderImpression(impUrl, config, auction, candidates));
-
+			// Append bidder notification URL if any
 			if (winnerBid.nurl)
 				DOM.pixel(document.body, Auction.renderMacro(winnerBid.nurl, auction, secondPrice));
 
-			debug('end', {winner: winnerBidder.id, price: secondPrice});
+			// Append publisher tracking URL if any
+			if (impUrl)
+				DOM.pixel(document.body, Auction.renderTrack(impUrl, config, auction, candidates));
 		}
-		else
-		{
-			DOM.html(creative, config.imp[0].passback || '');
 
-			debug('end', {price: secondPrice});
+		// No winner found, display passback code if any
+		else if (config.imp[0].passback)
+		{
+			if (true) // There should be an option to display passback inside iframe
+				sendPass(config.imp[0].passback);
+			else if (config.imp[0].passback)
+				DOM.html(DOM.create(document.body, 'div'), config.imp[0].passback);
 		}
+
+		// Send debug 'end' flow step
+		sendDebug('end', {winner: winnerId, price: secondPrice});
 	},
 
 	send: function (config, auction, bidder)
@@ -343,10 +344,23 @@ var Auction = {
 			});
 	},
 
+	renderMacro: function (template, auction, secondPrice)
+	{
+		return template
+			.replace('${AUCTION_AD_ID}', '')
+			.replace('${AUCTION_BID_ID}', '')
+			.replace('${AUCTION_CURRENCY}', '')
+			.replace('${AUCTION_ID}', auction.id)
+			.replace('${AUCTION_IMP_ID}', '')
+			.replace('${AUCTION_SEAT_ID}', '')
+			.replace('${AUCTION_PRICE}', secondPrice)
+			.replace('${CLICK_URL}', '');
+	},
+
 	/*
-	* Renders an impression pixel in the bottom of the ad
+	* Render an impression tracking pixel in the bottom of the ad.
 	*/
-	renderImpression: function (impUrl, config, auction, candidates)
+	renderTrack: function (impUrl, config, auction, candidates)
 	{
 		var candidate;
 		var first;
@@ -385,19 +399,6 @@ var Auction = {
 		}
 
 		return impUrl;
-	},
-
-	renderMacro: function (template, auction, secondPrice)
-	{
-		return template
-			.replace('${AUCTION_AD_ID}', '')
-			.replace('${AUCTION_BID_ID}', '')
-			.replace('${AUCTION_CURRENCY}', '')
-			.replace('${AUCTION_ID}', auction.id)
-			.replace('${AUCTION_IMP_ID}', '')
-			.replace('${AUCTION_SEAT_ID}', '')
-			.replace('${AUCTION_PRICE}', secondPrice)
-			.replace('${CLICK_URL}', '');
 	}
 };
 

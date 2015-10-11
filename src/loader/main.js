@@ -6,6 +6,7 @@
 bidTorrent = (function ()
 {
 	var Config = require('./config').Config;
+	var DOM = require('../dom').DOM;
 	var Future = require('../future').Future;
 	var HTTP = require('../http').HTTP;
 
@@ -62,8 +63,8 @@ bidTorrent = (function ()
 				{
 					var bidders;
 					var client;
-					var clientUrl;
 					var config;
+					var from;
 					var imp;
 					var parent;
 					var parse;
@@ -155,7 +156,7 @@ bidTorrent = (function ()
 						parse = document.createElement('a');
 						parse.href = init.clientUrl;
 
-						clientUrl = parse.protocol + '//' + parse.hostname;
+						from = parse.protocol + '//' + parse.hostname;
 
 						window.addEventListener('message', (function (channel, parent)
 						{
@@ -163,7 +164,7 @@ bidTorrent = (function ()
 							{
 								var data;
 
-								if (message.origin !== clientUrl)
+								if (message.origin !== from)
 									return;
 
 								try
@@ -192,6 +193,11 @@ bidTorrent = (function ()
 											for (var i = 0; i < probes.length; ++i)
 												probes[i](parent, data.flow, data.params);
 										}
+
+										break;
+
+									case 'pass':
+										DOM.html(parent, data.code || '');
 
 										break;
 								}

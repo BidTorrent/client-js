@@ -88,7 +88,8 @@
 	{
 		var auction;
 		var id;
-		var send;
+		var sendDebug;
+		var sendPass;
 
 		var makeGuid = function ()
 		{
@@ -111,15 +112,17 @@
 		};
 
 		if (debug)
-			send = function (flow, params) { Message.debug(channel, flow, params); };
+			sendDebug = function (flow, params) { Message.debug(channel, flow, params); };
 		else
-			send = function () {};
+			sendDebug = function () {};
+
+		sendPass = function (code) { Message.pass(channel, code); };
 
 		Auction
-			.begin(config, auction, send)
+			.begin(config, auction, sendDebug)
 			.then(function ()
 			{
-				Auction.end(auction, bidders, arguments, config, impUrl, send);
+				Auction.end(auction, bidders, arguments, config, impUrl, sendDebug, sendPass);
 			});
 	}
 

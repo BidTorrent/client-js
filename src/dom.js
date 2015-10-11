@@ -1,29 +1,39 @@
 
 var DOM = {
-	html: function (node, content, complete)
+	create: function (parent, type)
 	{
-		var evaluate = function (node, complete)
+		var element;
+
+		element = document.createElement(type);
+		parent.appendChild(element);
+
+		return element;
+	},
+
+	html: function (element, content, complete)
+	{
+		var evaluate = function (element, complete)
 		{
 			var parent;
 			var recurse;
 			var script;
 			var source;
 
-			// Script node found, force evaluation
-			if (node.nodeName.toUpperCase() === 'SCRIPT' && (!node.type || node.type.toLowerCase() === 'text/javascript') && node.parentNode)
+			// Script element found, force evaluation
+			if (element.nodeName.toUpperCase() === 'SCRIPT' && (!element.type || element.type.toLowerCase() === 'text/javascript') && element.parentNode)
 			{
-				source = node.text || node.textContent || node.innerHTML || '';
+				source = element.text || element.textContent || element.innerHTML || '';
 				script = document.createElement('script');
 				script.type = 'text/javascript';
 
 				// Asynchronously complete script having an "src" attribute to
 				// simulate standard DOM sequential loading
-				if (node.src)
+				if (element.src)
 				{
 					script.onabort = complete;
 					script.onerror = complete;
 					script.onload = complete;
-					script.src = node.src;
+					script.src = element.src;
 				}
 
 				try
@@ -38,12 +48,12 @@ var DOM = {
 				}
 
 				// Swap inactive script node with created one
-				parent = node.parentNode;
-				parent.removeChild(node);
+				parent = element.parentNode;
+				parent.removeChild(element);
 				parent.appendChild(script);
 
 				// Synchronously complete script without "src" attribute
-				if (!node.src)
+				if (!element.src)
 					complete();
 
 				return;
@@ -58,14 +68,14 @@ var DOM = {
 					complete();
 			};
 
-			recurse(node.childNodes, 0);
+			recurse(element.childNodes, 0);
 		};
 
-		node.innerHTML = content;
+		element.innerHTML = content;
 
-		evaluate(node, complete || function () {});
+		evaluate(element, complete || function () {});
 
-		return node;
+		return element;
 	},
 
 	pixel: function (parent, url)
