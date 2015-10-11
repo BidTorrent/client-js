@@ -1,13 +1,13 @@
 
 var Message = {
-	alert: function (channel, message)
+	alert: function (channel, text)
 	{
-		Message.send({channel: channel, type: 'alert', message: message});
+		Message.send({channel: channel, type: 'alert', text: text});
 	},
 
-	debug: function (channel, auction, event, params)
+	debug: function (channel, flow, params)
 	{
-		Message.send({channel: channel, type: event, auction: auction, params: params});
+		Message.send({channel: channel, type: 'debug', flow: flow, params: params});
 	},
 
 	send: function (data)

@@ -111,7 +111,7 @@
 		};
 
 		if (debug)
-			send = function (event, params) { Message.debug(channel, id, event, params); };
+			send = function (flow, params) { Message.debug(channel, flow, params); };
 		else
 			send = function () {};
 

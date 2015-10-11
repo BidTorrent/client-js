@@ -153,7 +153,7 @@
 	document.body.appendChild(debugCss);
 
 	// FIXME
-	parent.bidTorrent.connect(function (type, element, auction, params)
+	parent.bidTorrent.connect(function (element, flow, params)
 	{
 		defer(function ()
 		{
@@ -171,10 +171,10 @@
 					.insertAfter(creative);
 			}
 
-			switch (type)
+			switch (flow)
 			{
 				case 'alert':
-					console.error('[BidTorrent] ' + params);
+					console.error('[BidTorrent] ' + params.text);
 
 					break;
 

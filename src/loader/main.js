@@ -62,11 +62,12 @@ bidTorrent = (function ()
 				{
 					var bidders;
 					var client;
+					var clientUrl;
 					var config;
-					var element;
 					var imp;
-					var listener;
+					var parent;
 					var parse;
+					var success;
 
 					bidders = biddersResult[0];
 					config = configResult[0];
@@ -95,7 +96,7 @@ bidTorrent = (function ()
 						return;
 					}
 
-					var zoneFound = 0;
+					success = 0;
 
 					for (var i = 0; i < config.imp.length; ++i)
 					{
@@ -109,27 +110,27 @@ bidTorrent = (function ()
 							return;
 						}
 
-						element = document.getElementById(imp.id);
+						parent = document.getElementById(imp.id);
 
-						if (!element)
+						if (!parent)
 							continue;
 
-						zoneFound ++;
+						++success;
 
 						if (imp.banner === undefined || imp.banner.w === undefined || imp.banner.h === undefined)
 						{
 							imp.banner = imp.banner || {};
-							imp.banner.h = imp.banner.h || element.offsetHeight;
-							imp.banner.w = imp.banner.w || element.offsetWidth;
+							imp.banner.h = imp.banner.h || parent.offsetHeight;
+							imp.banner.w = imp.banner.w || parent.offsetWidth;
 						}
 
 						// Create and append client element
 						client = document.createElement('iframe');
-						client.onload = (function (clientClosure, channel)
+						client.onload = (function (channel, client)
 						{
 							return function ()
 							{
-								clientClosure.contentWindow.postMessage(JSON.stringify({
+								client.contentWindow.postMessage(JSON.stringify({
 									bidders:	bidders,
 									channel:	channel,
 									impId:		channel,
@@ -139,7 +140,7 @@ bidTorrent = (function ()
 									siteUrl:	url('/')
 								}), '*');
 							};
-						})(client, i);
+						})(i, client);
 
 						client.frameBorder = 0;
 						client.scrolling = 'no';
@@ -148,49 +149,58 @@ bidTorrent = (function ()
 						client.style.width = imp.banner.w + 'px';
 						client.src = init.clientUrl;
 
-						element.appendChild(client);
+						parent.appendChild(client);
 
-						// Create and append debug mode element
-						if (init.debug)
+						// Connect message listener on client iframe
+						parse = document.createElement('a');
+						parse.href = init.clientUrl;
+
+						clientUrl = parse.protocol + '//' + parse.hostname;
+
+						window.addEventListener('message', (function (channel, parent)
 						{
-							parse = document.createElement('a');
-							parse.href = init.clientUrl;
-
-							// Connect to messages from client component
-							window.addEventListener('message', (function (channel, element)
+							return function (message)
 							{
-								return function (message)
+								var data;
+
+								if (message.origin !== clientUrl)
+									return;
+
+								try
 								{
-									var data;
+									data = JSON.parse(message.data);
+								}
+								catch (e)
+								{
+									return;
+								}
 
-									if (message.origin !== parse.protocol + '//' + parse.hostname)
-										return;
+								if (!data || data.channel !== channel)
+									return;
 
-									try
-									{
-										data = JSON.parse(message.data);
-									}
-									catch (e)
-									{
-										return;
-									}
+								switch (data.type)
+								{
+									case 'alert':
+										if (init.debug)
+											console.error(data.text);
 
-									if (data.channel !== channel)
-										return;
+										break;
 
-									for (var i = 0; i < probes.length; ++i)
-										probes[i](data.type, element, data.auction, data.params);
-								};
-							})(i, element), false);
-						}
+									case 'debug':
+										if (init.debug)
+										{
+											for (var i = 0; i < probes.length; ++i)
+												probes[i](parent, data.flow, data.params);
+										}
+
+										break;
+								}
+							};
+						})(i, parent), false);
 					}
 
-					if (zoneFound == 0) {
-						if (init.debug)
-							console.error('[BidTorrent] no DOM element found for id #' + imp.id);
-
-						return;
-					}
+					if (init.debug && success === 0)
+						console.info('[BidTorrent] no compatible DOM element found');
 				});
 		};
 
