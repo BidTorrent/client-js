@@ -131,6 +131,9 @@ var Auction = {
 	{
 		var bid;
 		var candidates;
+		var domainBidder;
+		var domainForbidden;
+		var domainPattern;
 		var pass;
 		var seatbid;
 		var secondPrice;
@@ -237,19 +240,25 @@ var Auction = {
 				continue;
 			}
 
-			if (bid.adomain && bid.adomain.length > 0 && auction.request.badv)
+			if (bid.adomain && bid.adomain.length > 0 && auction.request.badv && auction.request.badv.length > 0)
 			{
+				domainPattern = /^(https?:\/\/)?\.?([-a-zA-Z0-9@:%._\+~#=]+).*/;
 				pass = true;
 
 				for (var j = 0; pass && j < auction.request.badv.length; ++j)
 				{
+					domainForbidden = '.' + auction.request.badv[j].replace(domainPattern, '$2').toLowerCase();
+
 					for (var k = 0; pass && k < bid.adomain.length; ++k)
-						pass = auction.request.badv[j] !== bid.adomain[k];
+					{
+						domainBidder = '.' + bid.adomain[k].replace(domainPattern, '$2').toLowerCase();
+						pass = domainBidder.substr(Math.max(domainBidder.length - domainForbidden.length, 0)) !== domainForbidden;
+					}
 				}
 
 				if (!pass)
 				{
-					sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid advertiser domain'});
+					sendDebug('bid_error', {bidder: bidders[i].id, reason: 'blacklisted advertiser domain'});
 
 					continue;
 				}
