@@ -37,7 +37,6 @@ var HTTP = {
 		var future = new Future();
 		var xhr = new XMLHttpRequest();
 
-		xhr.withCredentials = true;
 		xhr.onreadystatechange = function ()
 		{
 			if (xhr.readyState === 4)
@@ -49,11 +48,13 @@ var HTTP = {
 			if (data !== undefined)
 			{
 				xhr.open('POST', url, true);
+				xhr.withCredentials = true;
 				xhr.send(data);
 			}
 			else
 			{
 				xhr.open('GET', url, true);
+				xhr.withCredentials = true;
 				xhr.send();
 			}
 		}
