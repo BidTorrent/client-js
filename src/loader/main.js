@@ -197,7 +197,9 @@ bidTorrent = (function ()
 										break;
 
 									case 'pass':
-										DOM.html(parent, data.code || '');
+										parent.removeChild(client);
+
+										DOM.append(parent, data.code || '');
 
 										break;
 								}

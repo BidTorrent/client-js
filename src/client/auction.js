@@ -298,7 +298,7 @@ var Auction = {
 		{
 			secondPrice += 0.01;
 
-			DOM.html(DOM.create(document.body, 'div'), Auction.renderMacro(winnerBid.adm, auction, secondPrice));
+			DOM.append(document.body, Auction.renderMacro(winnerBid.adm, auction, secondPrice));
 
 			// Append bidder notification URL if any
 			if (winnerBid.nurl)
@@ -315,7 +315,7 @@ var Auction = {
 			if (true) // There should be an option to display passback inside iframe
 				sendPass(config.imp[0].passback);
 			else if (config.imp[0].passback)
-				DOM.html(DOM.create(document.body, 'div'), config.imp[0].passback);
+				DOM.append(document.body, config.imp[0].passback);
 		}
 
 		// Send debug 'end' flow step

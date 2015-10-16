@@ -1,21 +1,14 @@
 
 var DOM = {
-	create: function (parent, type)
-	{
-		var element;
-
-		element = document.createElement(type);
-		parent.appendChild(element);
-
-		return element;
-	},
-
-	html: function (element, content, complete)
+	/*
+	** Append content to DOM element and force script nodes re-evaluation.
+	*/
+	append: function (target, content)
 	{
 		var evaluate = function (element, complete)
 		{
+			var iterate;
 			var parent;
-			var recurse;
 			var script;
 			var source;
 
@@ -55,35 +48,68 @@ var DOM = {
 				// Synchronously complete script without "src" attribute
 				if (!element.src)
 					complete();
-
-				return;
 			}
 
-			// Not a script node, browse children
-			recurse = function (nodes, i)
+			// Not a script node, recurse on children
+			else
 			{
-				if (i < nodes.length)
-					evaluate(nodes[i], function () { recurse(nodes, i + 1); });
-				else
-					complete();
-			};
+				iterate = function (nodes, i)
+				{
+					if (i < nodes.length)
+						evaluate(nodes[i], function () { iterate(nodes, i + 1); });
+					else
+						complete();
+				};
 
-			recurse(element.childNodes, 0);
+				iterate(element.childNodes, 0);
+			}
 		};
 
-		element.innerHTML = content;
+		// Use innerHTML property to build DOM from string into "source" node
+		var source = document.createElement('div');
 
-		evaluate(element, complete || function () {});
+		source.innerHTML = content;
 
-		return element;
+		// Copy child nodes from source to target and force script re-evaluation
+		var replicate = function (source, target, complete)
+		{
+			var node;
+
+			if (source.childNodes.length > 0)
+			{
+				node = source.childNodes[0];
+
+				source.removeChild(node);
+				target.appendChild(node);
+
+				evaluate(node, function () { replicate(source, target, complete); });
+			}
+			else
+				complete();
+		};
+
+		// Capture "document.write" function and start nodes replication
+		var write = document.write;
+
+		document.write = function (content) { DOM.append(target, content); };
+
+		replicate(source, target, function ()
+		{
+			document.write = write;
+		});		
 	},
 
+	/*
+	** Create pixel element and append to given parent.
+	*/
 	pixel: function (parent, url)
 	{
 		var img = document.createElement('img');
+
 		img.height = '1px';
 		img.width = '1px';
 		img.src = url;
+
 		parent.appendChild(img);
 	}
 };

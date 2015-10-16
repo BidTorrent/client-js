@@ -9,4 +9,6 @@ passback = function (id)
 	setInterval(update, 1000);
 
 	update();
+
+	document.write('<center><p>And document.write works.</p></center>');
 };
