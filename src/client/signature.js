@@ -37,12 +37,11 @@ function base64ToHex(str) {
 }
 
 var Signature = {
-    check: function (price, auctionId, impId, publisherId, bidfloor, key, signature) {
-        data = price.toFixed(6) + '|' + auctionId + '|' + impId + '|' + publisherId + '|' + bidfloor.toFixed(6);
+    check: function (message, key, signature) {
         keyTyped = KEYUTIL.getKey(key);
         var sig = new crypto.Signature({"alg": "SHA1withRSA", "prov": "cryptojs/jsrsa"});
         sig.initVerifyByPublicKey(keyTyped);
-        sig.updateString(data);
+        sig.updateString(message);
         return sig.verify(base64ToHex(signature));
     }
 };

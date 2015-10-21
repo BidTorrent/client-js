@@ -62,7 +62,7 @@ var Auction = {
 
 				for (; userLangId < filters.user_lang.length; ++userLangId)
 				{
-					if (filters.user_lang[userLangId] === auction.request.device.language)
+					if (filters.user_lang[userLangId] === config.device.language)
 						break;
 				}
 
@@ -73,7 +73,7 @@ var Auction = {
 			{
 				for (var userLangId = 0; userLangId < filters.user_lang.length; ++userLangId)
 				{
-					if (filters.user_lang[userLangId] === auction.request.device.language)
+					if (filters.user_lang[userLangId] === config.device.language)
 						return false;
 				}
 			}
@@ -134,7 +134,9 @@ var Auction = {
 		var domainBidder;
 		var domainForbidden;
 		var domainPattern;
+		var message;
 		var pass;
+		var payload;
 		var seatbid;
 		var secondPrice;
 		var winnerBid;
@@ -188,8 +190,8 @@ var Auction = {
 			{
 				pass = false;
 
-				for (var j = 0; !pass && j < auction.request.cur.length; ++j)
-					pass = data.cur === auction.request.cur[j];
+				for (var j = 0; !pass && j < config.cur.length; ++j)
+					pass = data.cur === config.cur[j];
 
 				if (!pass)
 				{
@@ -210,9 +212,10 @@ var Auction = {
 			}
 
 			// Find first bid if any
-			bid = seatbid.bid[0];
+			bid = seatbid.bid[0] || {};
+			bid.ext = bid.ext || {};
 
-			if (!bid || !bid.adm)
+			if (!bid.adm)
 			{
 				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing creative'});
 
@@ -226,28 +229,21 @@ var Auction = {
 				continue;
 			}
 
-			if (!bid.ext || !bid.ext.signature)
-			{
-				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing signature'});
-
-				continue;
-			}
-
-			if (bid.impid && bid.impid != auction.request.imp[0].id)
+			if (bid.impid && bid.impid != config.imp[0].id)
 			{
 				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid imp id'});
 
 				continue;
 			}
 
-			if (bid.adomain && bid.adomain.length > 0 && auction.request.badv && auction.request.badv.length > 0)
+			if (bid.adomain && bid.adomain.length > 0 && config.badv && config.badv.length > 0)
 			{
 				domainPattern = /^(https?:\/\/)?\.?([-a-zA-Z0-9@:%._\+~#=]+).*/;
 				pass = true;
 
-				for (var j = 0; pass && j < auction.request.badv.length; ++j)
+				for (var j = 0; pass && j < config.badv.length; ++j)
 				{
-					domainForbidden = '.' + auction.request.badv[j].replace(domainPattern, '$2').toLowerCase();
+					domainForbidden = '.' + config.badv[j].replace(domainPattern, '$2').toLowerCase();
 
 					for (var k = 0; pass && k < bid.adomain.length; ++k)
 					{
@@ -264,7 +260,27 @@ var Auction = {
 				}
 			}
 
-			if (!Signature.check(bid.price, auction.request.id, config.imp[0].id, config.site.publisher.id, config.imp[0].bidfloor, bidders[i].key, bid.ext.signature))
+			// Build signature payload and check validity
+			if (!bid.ext.signature)
+			{
+				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'missing signature'});
+
+				continue;
+			}
+
+			// FIXME: there's lot of redundancy between message and payload, should be merged
+			if (bid.ext.address !== undefined && bid.ext.timestamp !== undefined && bid.ext.version !== undefined)
+			{
+				message = bid.ext.version + '|' + bid.price.toFixed(6) + '|' + bid.ext.timestamp + '|' + bid.ext.address + '|' + auction.request.id + '|' + config.imp[0].id + '|' + config.site.publisher.id + '|' + config.imp[0].bidfloor.toFixed(6);
+				payload = bid.ext.version + '-' + bid.ext.signature + '-' + bid.price + '-' + bid.ext.timestamp + '-' + bid.ext.address;
+			}
+			else
+			{
+				message = bid.price.toFixed(6) + '|' + auction.request.id + '|' + config.imp[0].id + '|' + config.site.publisher.id + '|' + config.imp[0].bidfloor.toFixed(6);
+				payload = bid.price + '-' + bid.ext.signature;
+			}
+
+			if (!Signature.check(message, bidders[i].key, bid.ext.signature))
 			{
 				sendDebug('bid_error', {bidder: bidders[i].id, reason: 'invalid signature'});
 
@@ -275,8 +291,7 @@ var Auction = {
 			candidates.push({
 				bidder:		bidders[i].id,
 				impid:		bid.impid,
-				price:		bid.price,
-				signature:	bid.ext.signature
+				payload:	payload
 			});
 
 			sendDebug('bid_valid', {bidder: bidders[i].id, price: bid.price});
@@ -392,7 +407,7 @@ var Auction = {
 				if (candidate.impid !== impId)
 					continue;
 
-				parts['d[' + i + '][' + candidate.bidder + ']'] = candidate.price + '-' + candidate.signature;
+				parts['d[' + i + '][' + candidate.bidder + ']'] = candidate.payload;
 			}
 
 			parts['f[' + i + ']'] = config.imp[i].bidfloor;
