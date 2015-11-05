@@ -14,6 +14,7 @@ var DOM = {
 	{
 		var evaluate = function (element, complete)
 		{
+			var nodes;
 			var parent;
 			var recurse;
 			var script;
@@ -68,7 +69,13 @@ var DOM = {
 					complete();
 			};
 
-			recurse(element.childNodes, 0);
+			// Clones child nodes and start browsing
+			nodes = [];
+
+			for (var i = 0; i < element.childNodes.length; ++i)
+				nodes.push(element.childNodes[i]);
+
+			recurse(nodes, 0);
 		};
 
 		element.innerHTML = content;
